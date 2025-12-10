@@ -148,6 +148,7 @@ docs/
 
 请按照类别将新文档放入相应目录：
 
+- **架构相关** → `docs/architecture/`
 - **部署相关** → `docs/deployment/`
 - **并发相关** → `docs/concurrency/`
 - **修复相关** → `docs/fixes/`

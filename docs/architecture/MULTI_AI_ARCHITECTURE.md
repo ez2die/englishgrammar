@@ -38,10 +38,10 @@
                           ↓
 ┌─────────────────────────────────────────────────────────┐
 │                  AI访问层 (Provider Layer)              │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐           │
-│  │ Gemini   │  │ OpenAI   │  │ Claude   │  ...       │
-│  │ Provider │  │ Provider │  │ Provider │           │
-│  └──────────┘  └──────────┘  └──────────┘           │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
+│  │ Gemini   │  │ OpenAI   │  │ Claude   │  │ DeepSeek │  │ Qwen     │  │
+│  │ Provider │  │ Provider │  │ Provider │  │ Provider │  │ Provider │  │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘  │
 │       ↓              ↓              ↓                  │
 │  ┌──────────────────────────────────────────────┐   │
 │  │         AIProvider Interface                  │   │
@@ -339,6 +339,32 @@ export const AI_CONFIG = {
         temperature: 0.7,
         maxTokens: 2000,
       },
+    },
+    deepseek: {
+      enabled: true,
+      priority: 2,  // 与OpenAI同级，作为主要备用
+      apiKey: process.env.DEEPSEEK_API_KEY,
+      model: 'deepseek-chat',
+      fallbackModel: 'deepseek-reasoner',
+      options: {
+        temperature: 0.7,
+        maxTokens: 2000,
+      },
+      // DeepSeek使用OpenAI兼容的API格式
+      apiBase: 'https://api.deepseek.com',
+    },
+    qwen: {
+      enabled: true,
+      priority: 2,  // 与OpenAI同级，作为主要备用
+      apiKey: process.env.QWEN_API_KEY,
+      model: 'qwen-turbo',
+      fallbackModel: 'qwen-plus',
+      options: {
+        temperature: 0.7,
+        maxTokens: 2000,
+      },
+      // Qwen使用DashScope API
+      apiBase: 'https://dashscope.aliyuncs.com/api/v1',
     },
   },
   

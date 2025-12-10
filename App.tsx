@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { generateSentenceAnalysis } from './services/geminiService';
 import { storageService } from './services/storageService';
-import { SentenceAnalysisData, GrammarRole, SentenceStructure, DifficultyLevel } from './types';
+import { SentenceAnalysisData, GrammarRole, SentenceStructure, DifficultyLevel, Theme } from './types';
 import { GRAMMAR_ROLES, SENTENCE_STRUCTURES, SKELETON_CONFIG } from './constants';
 import WordPill from './components/WordPill';
+import { useTheme } from './contexts/ThemeContext';
+import ThemeSwitcher from './components/ThemeSwitcher';
 
 const App: React.FC = () => {
+  const { theme, themeConfig } = useTheme();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<SentenceAnalysisData | null>(null);
   
@@ -496,9 +499,12 @@ const App: React.FC = () => {
     const skeletonComplete = SKELETON_CONFIG[selectedStructure].every(
       slot => (skeletonSlots[slot] || []).length > 0
     );
-    const skeletonSlotsCount = Object.values(skeletonSlots).reduce((sum, arr) => sum + arr.length, 0);
+    const skeletonSlotsValues = Object.values(skeletonSlots) as number[][];
+    const skeletonSlotsCount: number = skeletonSlotsValues.reduce((sum: number, arr: number[]) => {
+      return sum + (arr?.length || 0);
+    }, 0);
     const totalSkeletonSlots = SKELETON_CONFIG[selectedStructure].length;
-    const skeletonProgress = skeletonComplete ? 1 : skeletonSlotsCount / totalSkeletonSlots;
+    const skeletonProgress: number = skeletonComplete ? 1 : (skeletonSlotsCount / totalSkeletonSlots);
     
     const assignedCount = Object.keys(assignedRoles).length;
     const totalWords = data.words.filter((_, idx) => {
@@ -513,42 +519,85 @@ const App: React.FC = () => {
 
   // Loading Screen
   if (loading) {
+    const loadingBg = theme === Theme.FRESH 
+      ? 'bg-gradient-to-br from-emerald-50 via-cyan-50 to-sky-50'
+      : 'bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50';
+    const spinnerBorder = theme === Theme.FRESH
+      ? 'border-emerald-200 border-t-emerald-500'
+      : 'border-purple-200 border-t-purple-500';
+    const textColor = theme === Theme.FRESH
+      ? 'text-emerald-600'
+      : 'text-purple-600';
+    
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
+      <div className={`min-h-screen flex flex-col items-center justify-center ${loadingBg}`}>
         <div className="relative">
-          <div className="w-20 h-20 border-4 border-purple-200 border-t-purple-500 rounded-full animate-spin"></div>
+          <div className={`w-20 h-20 border-4 ${spinnerBorder} rounded-full animate-spin`}></div>
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="text-2xl">✨</span>
           </div>
         </div>
-        <p className="mt-6 text-xl font-bold text-purple-600 animate-pulse">Creating Challenge...</p>
+        <p className={`mt-6 text-xl font-bold ${textColor} animate-pulse`}>Creating Challenge...</p>
       </div>
     );
   }
 
   // HOME SCREEN (Level Selection)
   if (!data && !loading) {
+     const isFresh = theme === Theme.FRESH;
+     
+     const homeBg = isFresh 
+       ? 'bg-gradient-to-br from-emerald-50 via-cyan-50 to-sky-50'
+       : 'bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50';
+     
+     const titleGradient = isFresh
+       ? 'bg-gradient-to-r from-emerald-600 via-cyan-600 to-sky-500'
+       : 'bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500';
+     
+     const cardBg = isFresh
+       ? 'bg-white/90 backdrop-blur-sm border-emerald-200'
+       : 'bg-white/80 backdrop-blur-sm border-purple-200';
+     
+     const scoreColor = isFresh ? 'text-emerald-600' : 'text-purple-600';
+     const streakTextColor = isFresh ? 'text-cyan-600' : 'text-orange-600';
+     const streakBorderColor = isFresh ? 'border-cyan-200' : 'border-orange-200';
+     
+     const level1Btn = isFresh
+       ? 'bg-gradient-to-r from-emerald-300 to-teal-400 border-emerald-500 text-emerald-50'
+       : 'bg-gradient-to-r from-green-400 to-emerald-500 border-green-600 text-green-100';
+     
+     const level2Btn = isFresh
+       ? 'bg-gradient-to-r from-cyan-300 to-sky-400 border-cyan-500 text-cyan-50'
+       : 'bg-gradient-to-r from-yellow-400 to-orange-500 border-orange-600 text-orange-100';
+     
+     const level3Btn = isFresh
+       ? 'bg-gradient-to-r from-sky-300 to-blue-400 border-sky-500 text-sky-50'
+       : 'bg-gradient-to-r from-pink-500 to-rose-600 border-rose-700 text-pink-100';
+
      return (
-       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-4 pb-8">
+       <div className={`min-h-screen ${homeBg} p-4 pb-8`}>
          {/* Header */}
-         <div className="text-center pt-8 pb-6">
-           <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 mb-2">
+         <div className="text-center pt-8 pb-6 relative">
+           <div className="absolute top-8 right-4">
+             <ThemeSwitcher />
+           </div>
+           <h1 className={`text-5xl font-black text-transparent bg-clip-text ${titleGradient} mb-2`}>
              Grammar Master
            </h1>
-           <p className="text-gray-600 text-sm font-medium">Master English Sentence Structure</p>
+           <p className={`${isFresh ? 'text-slate-600' : 'text-gray-600'} text-sm font-medium`}>Master English Sentence Structure</p>
          </div>
 
          {/* Score Display */}
          {(score > 0 || streak > 0) && (
            <div className="max-w-md mx-auto mb-6 flex gap-3">
-             <div className="flex-1 bg-white/80 backdrop-blur-sm rounded-2xl p-3 border-2 border-purple-200 shadow-lg">
-               <div className="text-xs text-gray-500 font-bold uppercase mb-1">Score</div>
-               <div className="text-2xl font-black text-purple-600">{score}</div>
+             <div className={`flex-1 ${cardBg} rounded-2xl p-3 border-2 shadow-lg`}>
+               <div className={`text-xs ${isFresh ? 'text-slate-500' : 'text-gray-500'} font-bold uppercase mb-1`}>Score</div>
+               <div className={`text-2xl font-black ${scoreColor}`}>{score}</div>
              </div>
              {streak > 0 && (
-               <div className="flex-1 bg-white/80 backdrop-blur-sm rounded-2xl p-3 border-2 border-orange-200 shadow-lg">
-                 <div className="text-xs text-gray-500 font-bold uppercase mb-1">Streak</div>
-                 <div className="text-2xl font-black text-orange-600 flex items-center gap-1">
+               <div className={`flex-1 ${cardBg} ${streakBorderColor} rounded-2xl p-3 border-2 shadow-lg`}>
+                 <div className={`text-xs ${isFresh ? 'text-slate-500' : 'text-gray-500'} font-bold uppercase mb-1`}>Streak</div>
+                 <div className={`text-2xl font-black ${streakTextColor} flex items-center gap-1`}>
                    🔥 {streak}
                  </div>
                </div>
@@ -557,7 +606,7 @@ const App: React.FC = () => {
          )}
 
          {errorMsg && (
-           <div className="max-w-md mx-auto mb-4 bg-red-100 text-red-700 p-4 rounded-2xl border-2 border-red-200 font-bold text-sm">
+           <div className={`max-w-md mx-auto mb-4 ${isFresh ? 'bg-rose-100 text-rose-700 border-rose-200' : 'bg-red-100 text-red-700 border-red-200'} p-4 rounded-2xl border-2 font-bold text-sm`}>
              {errorMsg}
            </div>
          )}
@@ -566,13 +615,13 @@ const App: React.FC = () => {
          <div className="max-w-md mx-auto space-y-4">
            <button 
              onClick={() => initGame(DifficultyLevel.BASIC)}
-             className="w-full bg-gradient-to-r from-green-400 to-emerald-500 text-white p-6 rounded-3xl shadow-xl border-2 border-green-600 active:scale-95 transition-all transform hover:shadow-2xl"
+             className={`w-full ${level1Btn} text-white p-6 rounded-3xl shadow-xl border-2 active:scale-95 transition-all transform hover:shadow-2xl`}
            >
              <div className="flex items-center gap-4">
                <div className="text-4xl">🌱</div>
                <div className="text-left flex-1">
                  <div className="text-xl font-black mb-1">Level 1: Basic</div>
-                 <div className="text-green-100 text-sm font-semibold">Simple Structures</div>
+                 <div className={`${level1Btn.split(' ').pop()} text-sm font-semibold`}>Simple Structures</div>
                </div>
                <div className="text-2xl">→</div>
              </div>
@@ -580,13 +629,13 @@ const App: React.FC = () => {
 
            <button 
              onClick={() => initGame(DifficultyLevel.INTERMEDIATE)}
-             className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-6 rounded-3xl shadow-xl border-2 border-orange-600 active:scale-95 transition-all transform hover:shadow-2xl"
+             className={`w-full ${level2Btn} text-white p-6 rounded-3xl shadow-xl border-2 active:scale-95 transition-all transform hover:shadow-2xl`}
            >
              <div className="flex items-center gap-4">
                <div className="text-4xl">⚡</div>
                <div className="text-left flex-1">
                  <div className="text-xl font-black mb-1">Level 2: Intermediate</div>
-                 <div className="text-orange-100 text-sm font-semibold">With Modifiers</div>
+                 <div className={`${level2Btn.split(' ').pop()} text-sm font-semibold`}>With Modifiers</div>
                </div>
                <div className="text-2xl">→</div>
              </div>
@@ -594,13 +643,13 @@ const App: React.FC = () => {
 
            <button 
              onClick={() => initGame(DifficultyLevel.ADVANCED)}
-             className="w-full bg-gradient-to-r from-pink-500 to-rose-600 text-white p-6 rounded-3xl shadow-xl border-2 border-rose-700 active:scale-95 transition-all transform hover:shadow-2xl"
+             className={`w-full ${level3Btn} text-white p-6 rounded-3xl shadow-xl border-2 active:scale-95 transition-all transform hover:shadow-2xl`}
            >
              <div className="flex items-center gap-4">
                <div className="text-4xl">🔥</div>
                <div className="text-left flex-1">
                  <div className="text-xl font-black mb-1">Level 3: Advanced</div>
-                 <div className="text-pink-100 text-sm font-semibold">Complex Clauses</div>
+                 <div className={`${level3Btn.split(' ').pop()} text-sm font-semibold`}>Complex Clauses</div>
                </div>
                <div className="text-2xl">→</div>
              </div>
@@ -652,11 +701,42 @@ const App: React.FC = () => {
     .filter(idx => !assignedRoles[idx] && !skeletonIndicesSet.has(idx));
 
   const progress = getProgress();
+  const isFresh = theme === Theme.FRESH;
+  
+  const gameBg = isFresh
+    ? 'bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50'
+    : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50';
+  
+  const headerBg = isFresh
+    ? 'bg-white/90 backdrop-blur-md border-emerald-200'
+    : 'bg-white/80 backdrop-blur-md border-purple-200';
+  
+  const progressBar = isFresh
+    ? 'bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-400'
+    : 'bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500';
+  
+  const levelBadge = (level: DifficultyLevel) => {
+    if (isFresh) {
+      return level === DifficultyLevel.BASIC ? 'bg-emerald-100 text-emerald-700' :
+             level === DifficultyLevel.INTERMEDIATE ? 'bg-cyan-100 text-cyan-700' :
+             'bg-sky-100 text-sky-700';
+    } else {
+      return level === DifficultyLevel.BASIC ? 'bg-green-100 text-green-700' :
+             level === DifficultyLevel.INTERMEDIATE ? 'bg-orange-100 text-orange-700' :
+             'bg-pink-100 text-pink-700';
+    }
+  };
+  
+  const phase1Bg = isFresh ? 'bg-emerald-500' : 'bg-pink-500';
+  const phase2Bg = isFresh ? 'bg-teal-500' : 'bg-orange-500';
+  const selectedBorder = isFresh ? 'border-emerald-500 bg-emerald-50/50' : 'border-pink-500 bg-pink-50/50';
+  const selectedRadio = isFresh ? 'border-emerald-500 bg-emerald-500' : 'border-pink-500 bg-pink-500';
+  const selectedText = isFresh ? 'text-emerald-700' : 'text-pink-700';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 pb-32">
+    <div className={`min-h-screen ${gameBg} pb-32`}>
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b-2 border-purple-200 sticky top-0 z-50 shadow-sm">
+      <header className={`${headerBg} border-b-2 sticky top-0 z-50 shadow-sm`}>
         <div className="px-4 py-2">
           <div className="flex items-center gap-3">
             {/* Back Button */}
@@ -672,18 +752,14 @@ const App: React.FC = () => {
             {/* Progress Bar */}
             <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 rounded-full transition-all duration-500 shadow-lg"
+                className={`h-full ${progressBar} rounded-full transition-all duration-500 shadow-lg`}
                 style={{ width: `${progress}%` }}
               />
             </div>
             
             {/* Level Badge */}
             {currentLevel && (
-              <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase flex-shrink-0 ${
-                currentLevel === DifficultyLevel.BASIC ? 'bg-green-100 text-green-700' :
-                currentLevel === DifficultyLevel.INTERMEDIATE ? 'bg-orange-100 text-orange-700' :
-                'bg-pink-100 text-pink-700'
-              }`}>
+              <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase flex-shrink-0 ${levelBadge(currentLevel)}`}>
                 {currentLevel}
               </span>
             )}
@@ -693,9 +769,9 @@ const App: React.FC = () => {
 
       <main className="px-4 py-6 space-y-6 max-w-2xl mx-auto">
         {/* Sentence Display - Sticky at top */}
-        <div ref={stickySentenceRef} className="sticky top-[48px] z-30 -mx-4 px-4 pt-3 pb-2 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border-b-2 border-purple-200 shadow-sm">
-          <div className="bg-white/95 backdrop-blur-md rounded-2xl p-3 shadow-lg border-2 border-purple-200">
-            <p className="text-lg font-bold text-gray-800 leading-relaxed text-center">
+        <div ref={stickySentenceRef} className={`sticky top-[48px] z-30 -mx-4 px-4 pt-3 pb-2 ${gameBg} border-b-2 ${isFresh ? 'border-emerald-200' : 'border-purple-200'} shadow-sm`}>
+          <div className={`${isFresh ? 'bg-white/95' : 'bg-white/95'} backdrop-blur-md rounded-2xl p-3 shadow-lg border-2 ${isFresh ? 'border-emerald-200' : 'border-purple-200'}`}>
+            <p className={`text-lg font-bold ${isFresh ? 'text-slate-800' : 'text-gray-800'} leading-relaxed text-center`}>
               {currentData.originalSentence}
             </p>
           </div>
@@ -704,8 +780,8 @@ const App: React.FC = () => {
         {/* Phase 1: Structure Selection */}
         <section className="space-y-4">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-pink-500 text-white flex items-center justify-center font-black text-sm">1</div>
-            <h2 className="text-xl font-black text-gray-800">选择句子结构</h2>
+            <div className={`w-8 h-8 rounded-full ${phase1Bg} text-white flex items-center justify-center font-black text-sm`}>1</div>
+            <h2 className={`text-xl font-black ${isFresh ? 'text-slate-800' : 'text-gray-800'}`}>选择句子结构</h2>
           </div>
           
           <div className="grid grid-cols-1 gap-3">
@@ -715,7 +791,7 @@ const App: React.FC = () => {
                 className={`
                   relative flex items-center p-4 bg-white/90 backdrop-blur-sm rounded-2xl border-2 cursor-pointer transition-all active:scale-95
                   ${selectedStructure === st 
-                    ? 'border-pink-500 bg-pink-50/50 shadow-lg' 
+                    ? `${selectedBorder} shadow-lg` 
                     : 'border-gray-200 hover:border-gray-300'}
                 `}
               >
@@ -730,11 +806,11 @@ const App: React.FC = () => {
                 />
                 <div className={`
                   w-6 h-6 rounded-full border-2 mr-3 flex items-center justify-center
-                  ${selectedStructure === st ? 'border-pink-500 bg-pink-500' : 'border-gray-300 bg-white'}
+                  ${selectedStructure === st ? selectedRadio : 'border-gray-300 bg-white'}
                 `}>
                   {selectedStructure === st && <div className="w-3 h-3 bg-white rounded-full" />}
                 </div>
-                <span className={`font-bold text-base ${selectedStructure === st ? 'text-pink-700' : 'text-gray-700'}`}>
+                <span className={`font-bold text-base ${selectedStructure === st ? selectedText : (isFresh ? 'text-slate-700' : 'text-gray-700')}`}>
                   {st}
                 </span>
               </label>
@@ -744,8 +820,8 @@ const App: React.FC = () => {
           {submitted && (
             <div className={`p-4 rounded-2xl border-2 ${
               selectedStructure === currentData.structureType 
-                ? 'bg-green-100 border-green-400 text-green-800' 
-                : 'bg-red-100 border-red-400 text-red-800'
+                ? (isFresh ? 'bg-emerald-100 border-emerald-400 text-emerald-800' : 'bg-green-100 border-green-400 text-green-800')
+                : (isFresh ? 'bg-rose-100 border-rose-400 text-rose-800' : 'bg-red-100 border-red-400 text-red-800')
             }`}>
               {selectedStructure === currentData.structureType ? (
                 <span className="font-bold flex items-center gap-2">
@@ -764,8 +840,8 @@ const App: React.FC = () => {
         {selectedStructure && (
           <section ref={phase2SectionRef} className="space-y-4 animate-fade-in">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center font-black text-sm">2</div>
-              <h2 className="text-xl font-black text-gray-800">确定 Skeleton 并定位其他单词</h2>
+              <div className={`w-8 h-8 rounded-full ${phase2Bg} text-white flex items-center justify-center font-black text-sm`}>2</div>
+              <h2 className={`text-xl font-black ${isFresh ? 'text-slate-800' : 'text-gray-800'}`}>确定 Skeleton 并定位其他单词</h2>
             </div>
 
             {/* Word Bank */}
@@ -887,14 +963,14 @@ const App: React.FC = () => {
                     }}
                     onClick={() => !submitted && addToSkeletonSlot(slot)}
                     className={`
-                      bg-gradient-to-br from-orange-50 to-amber-50 backdrop-blur-sm rounded-xl p-3 border-2 transition-all flex items-center gap-3
+                      ${isFresh ? 'bg-gradient-to-br from-teal-50 to-emerald-50' : 'bg-gradient-to-br from-orange-50 to-amber-50'} backdrop-blur-sm rounded-xl p-3 border-2 transition-all flex items-center gap-3
                       ${submitted ? 'border-gray-200' : 'cursor-pointer active:scale-[0.98]'}
                       ${slotIndices.length > 0 
-                        ? 'border-orange-400 shadow-md' 
-                        : 'border-dashed border-orange-300 min-h-[56px]'}
+                        ? (isFresh ? 'border-teal-400 shadow-md' : 'border-orange-400 shadow-md')
+                        : (isFresh ? 'border-dashed border-teal-300 min-h-[56px]' : 'border-dashed border-orange-300 min-h-[56px]')}
                     `}
                   >
-                    <div className="text-xs font-black text-orange-600 uppercase tracking-wider whitespace-nowrap min-w-[80px]">
+                    <div className={`text-xs font-black ${isFresh ? 'text-teal-600' : 'text-orange-600'} uppercase tracking-wider whitespace-nowrap min-w-[80px]`}>
                       {slot}
                     </div>
                     <div className="flex flex-wrap gap-1.5 flex-grow items-center">
@@ -982,14 +1058,14 @@ const App: React.FC = () => {
                         onDrop={(e) => onBasketDrop(e, role as GrammarRole)}
                         onClick={() => !submitted && assignSelectedToRole(role as GrammarRole)}
                         className={`
-                          bg-gradient-to-br from-purple-50 to-blue-50 backdrop-blur-sm rounded-xl p-3 border-2 transition-all flex items-center gap-3
+                          ${isFresh ? 'bg-gradient-to-br from-cyan-50 to-sky-50' : 'bg-gradient-to-br from-purple-50 to-blue-50'} backdrop-blur-sm rounded-xl p-3 border-2 transition-all flex items-center gap-3
                           ${submitted ? 'border-gray-200' : 'cursor-pointer active:scale-[0.98]'}
                           ${assignedIndices.length > 0 
-                            ? 'border-purple-400 shadow-md' 
-                            : 'border-dashed border-purple-300 min-h-[56px]'}
+                            ? (isFresh ? 'border-cyan-400 shadow-md' : 'border-purple-400 shadow-md')
+                            : (isFresh ? 'border-dashed border-cyan-300 min-h-[56px]' : 'border-dashed border-purple-300 min-h-[56px]')}
                         `}
                       >
-                        <div className="text-xs font-black text-purple-600 uppercase tracking-wider whitespace-nowrap min-w-[80px]">
+                        <div className={`text-xs font-black ${isFresh ? 'text-cyan-600' : 'text-purple-600'} uppercase tracking-wider whitespace-nowrap min-w-[80px]`}>
                           {role}
                         </div>
                         <div className="flex flex-wrap gap-1.5 flex-grow items-center">
@@ -1042,7 +1118,7 @@ const App: React.FC = () => {
 
         {/* Results */}
         {showResult && (
-          <div className="bg-gradient-to-br from-purple-600 to-pink-600 text-white rounded-3xl p-6 shadow-2xl space-y-4 animate-fade-in">
+          <div className={`${isFresh ? 'bg-gradient-to-br from-emerald-500 to-cyan-500' : 'bg-gradient-to-br from-purple-600 to-pink-600'} text-white rounded-3xl p-6 shadow-2xl space-y-4 animate-fade-in`}>
             <h3 className="text-2xl font-black flex items-center gap-2">
               <span>🎉</span> Results
             </h3>
@@ -1098,7 +1174,7 @@ const App: React.FC = () => {
 
       {/* Bottom Action Bar */}
       <footer className={`
-        fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t-2 border-purple-200 p-4 z-50 transition-transform duration-300
+        fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t-2 ${isFresh ? 'border-emerald-200' : 'border-purple-200'} p-4 z-50 transition-transform duration-300
         ${selectedStructure ? 'translate-y-0' : 'translate-y-full'}
       `}>
         <div className="max-w-2xl mx-auto">
@@ -1109,7 +1185,7 @@ const App: React.FC = () => {
               className={`
                 w-full text-white text-lg font-black py-4 rounded-2xl shadow-xl active:scale-95 transition-transform uppercase tracking-wider
                 ${selectedStructure 
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-500' 
+                  ? (isFresh ? 'bg-gradient-to-r from-emerald-400 to-cyan-500' : 'bg-gradient-to-r from-purple-500 to-pink-500')
                   : 'bg-gray-300 cursor-not-allowed'}
               `}
             >
@@ -1118,7 +1194,7 @@ const App: React.FC = () => {
           ) : (
             <button 
               onClick={() => initGame(currentLevel!)}
-              className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-lg font-black py-4 rounded-2xl shadow-xl active:scale-95 transition-transform uppercase tracking-wider"
+              className={`w-full ${isFresh ? 'bg-gradient-to-r from-teal-400 to-emerald-500' : 'bg-gradient-to-r from-green-500 to-emerald-500'} text-white text-lg font-black py-4 rounded-2xl shadow-xl active:scale-95 transition-transform uppercase tracking-wider`}
             >
               Next Challenge →
             </button>

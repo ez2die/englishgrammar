@@ -1,83 +1,95 @@
 /**
  * AI配置管理
+ * 使用 getter 延迟读取环境变量，确保在 dotenv 加载后读取
  */
 
-export const AI_CONFIG = {
-  // 默认提供商
-  defaultProvider: 'gemini',
-  
-  // 提供商配置
-  providers: {
-    gemini: {
-      enabled: true,
-      priority: 1,
-      apiKey: process.env.API_KEY || process.env.GEMINI_API_KEY || '',
-      model: 'gemini-2.5-flash-lite',
-      fallbackModel: 'gemini-1.5-flash',
-      options: {
-        temperature: 0.7,
-        maxTokens: 2000,
-      },
-      rateLimit: {
-        requestsPerMinute: 15,
-        requestsPerDay: 20,
-      },
+function createAIConfig() {
+  return {
+    // 默认提供商
+    get defaultProvider() {
+      return 'qwen';
     },
-    deepseek: {
-      enabled: true,
-      priority: 2,
-      apiKey: process.env.DEEPSEEK_API_KEY || '',
-      model: 'deepseek-v3.2',
-      fallbackModel: 'deepseek-chat',
-      options: {
-        temperature: 0.7,
-        maxTokens: 2000,
-      },
-      apiBase: process.env.DEEPSEEK_API_BASE || 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    
+    // 提供商配置
+    get providers() {
+      return {
+        qwen: {
+          enabled: true,
+          priority: 1,
+          get apiKey() { return process.env.QWEN_API_KEY || ''; },
+          model: 'qwen-flash',
+          fallbackModel: 'qwen-turbo',
+          options: {
+            temperature: 0.7,
+            maxTokens: 2000,
+          },
+          get apiBase() { return process.env.QWEN_API_BASE || 'https://dashscope.aliyuncs.com/compatible-mode/v1'; },
+        },
+        deepseek: {
+          enabled: true,
+          priority: 2,
+          get apiKey() { return process.env.DEEPSEEK_API_KEY || ''; },
+          model: 'deepseek-v3.2',
+          fallbackModel: 'deepseek-chat',
+          options: {
+            temperature: 0.7,
+            maxTokens: 2000,
+          },
+          get apiBase() { return process.env.DEEPSEEK_API_BASE || 'https://dashscope.aliyuncs.com/compatible-mode/v1'; },
+        },
+        gemini: {
+          enabled: true,
+          priority: 3,
+          get apiKey() { return process.env.API_KEY || process.env.GEMINI_API_KEY || ''; },
+          model: 'gemini-2.5-flash-lite',
+          fallbackModel: 'gemini-1.5-flash',
+          options: {
+            temperature: 0.7,
+            maxTokens: 2000,
+          },
+          rateLimit: {
+            requestsPerMinute: 15,
+            requestsPerDay: 20,
+          },
+        },
+        openai: {
+          enabled: true,
+          priority: 3,
+          get apiKey() { return process.env.OPENAI_API_KEY || ''; },
+          model: 'gpt-4o-mini',
+          fallbackModel: 'gpt-3.5-turbo',
+          options: {
+            temperature: 0.7,
+            maxTokens: 2000,
+          },
+        },
+        claude: {
+          enabled: false,
+          priority: 4,
+          get apiKey() { return process.env.CLAUDE_API_KEY || ''; },
+          model: 'claude-3-haiku-20240307',
+          options: {
+            temperature: 0.7,
+            maxTokens: 2000,
+          },
+        },
+      };
     },
-    qwen: {
-      enabled: true,
-      priority: 2,
-      apiKey: process.env.QWEN_API_KEY || '',
-      model: 'qwen-flash',
-      fallbackModel: 'qwen-turbo',
-      options: {
-        temperature: 0.7,
-        maxTokens: 2000,
-      },
-      apiBase: process.env.QWEN_API_BASE || 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    
+    // 降级配置
+    get fallback() {
+      return {
+        enabled: true,
+        strategy: 'priority', // 'priority' | 'round-robin' | 'random'
+        retryCount: 2,
+        retryDelay: 1000, // ms
+      };
     },
-    openai: {
-      enabled: true,
-      priority: 3,
-      apiKey: process.env.OPENAI_API_KEY || '',
-      model: 'gpt-4o-mini',
-      fallbackModel: 'gpt-3.5-turbo',
-      options: {
-        temperature: 0.7,
-        maxTokens: 2000,
-      },
-    },
-    claude: {
-      enabled: false,
-      priority: 4,
-      apiKey: process.env.CLAUDE_API_KEY || '',
-      model: 'claude-3-haiku-20240307',
-      options: {
-        temperature: 0.7,
-        maxTokens: 2000,
-      },
-    },
-  },
-  
-  // 降级配置
-  fallback: {
-    enabled: true,
-    strategy: 'priority', // 'priority' | 'round-robin' | 'random'
-    retryCount: 2,
-    retryDelay: 1000, // ms
-  },
-};
+  };
+}
+
+// 导出配置对象（使用 getter 延迟读取环境变量）
+export const AI_CONFIG = createAIConfig();
 
 /**
  * 获取提供商配置

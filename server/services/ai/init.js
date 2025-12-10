@@ -15,13 +15,42 @@ import { OpenAIProvider } from "./providers/openai/OpenAIProvider.js";
  * @returns {AIProviderManager}
  */
 export function initAIService() {
+  // 动态读取最新的环境变量并更新配置
+  const dynamicConfig = {
+    ...AI_CONFIG,
+    providers: {
+      gemini: {
+        ...AI_CONFIG.providers.gemini,
+        apiKey: process.env.API_KEY || process.env.GEMINI_API_KEY || '',
+      },
+      deepseek: {
+        ...AI_CONFIG.providers.deepseek,
+        apiKey: process.env.DEEPSEEK_API_KEY || '',
+        apiBase: process.env.DEEPSEEK_API_BASE || AI_CONFIG.providers.deepseek.apiBase,
+      },
+      qwen: {
+        ...AI_CONFIG.providers.qwen,
+        apiKey: process.env.QWEN_API_KEY || '',
+        apiBase: process.env.QWEN_API_BASE || AI_CONFIG.providers.qwen.apiBase,
+      },
+      openai: {
+        ...AI_CONFIG.providers.openai,
+        apiKey: process.env.OPENAI_API_KEY || '',
+      },
+      claude: {
+        ...AI_CONFIG.providers.claude,
+        apiKey: process.env.CLAUDE_API_KEY || '',
+      },
+    },
+  };
+
   const manager = new AIProviderManager(
-    AI_CONFIG,
-    AI_CONFIG.fallback
+    dynamicConfig,
+    dynamicConfig.fallback
   );
 
   // 注册所有提供商
-  const providerConfigs = AI_CONFIG.providers;
+  const providerConfigs = dynamicConfig.providers;
 
   // Gemini
   if (providerConfigs.gemini.enabled) {

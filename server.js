@@ -325,10 +325,13 @@ app.post('/api/generate', generateLimiter, async (req, res) => {
     }
 
     // 使用新的SentenceAnalysisService
+    const startTime = Date.now();
     const result = await sentenceAnalysisService.generateSentenceAnalysis(level, {
       preferredProvider: preferredProvider || null,
       enableFallback: true,
     });
+    const duration = Date.now() - startTime;
+    console.log(`[API] /api/generate completed in ${duration}ms for level: ${level}`);
 
     res.json(result);
     

@@ -32,11 +32,13 @@ export class SentenceAnalysisService {
     // 构建Prompt
     const prompt = this.promptBuilder.buildPrompt(level, { previousSentence });
     const schema = this.promptBuilder.getSchema();
+    const systemPrompt = this.promptBuilder.getSystemPrompt();
 
-    // 准备生成选项
+    // 准备生成选项（包含 system prompt - 最佳实践）
     const generateOptions = {
       responseFormat: 'json',
       schema: schema,
+      systemPrompt: systemPrompt, // 添加 system prompt
       temperature: 0.7,
       maxTokens: 2000,
     };
@@ -81,17 +83,51 @@ export class SentenceAnalysisService {
    */
   parseAIResponse(content) {
     try {
+      // 清理内容：移除 markdown 代码块标记
+      let cleanedContent = content.trim();
+      
+      // 移除开头的 markdown 代码块标记（如 ```json, ```, ```json\n 等）
+      cleanedContent = cleanedContent.replace(/^```(?:json)?\s*\n?/i, '');
+      
+      // 移除结尾的 markdown 代码块标记
+      cleanedContent = cleanedContent.replace(/\n?```\s*$/i, '');
+      
+      // 再次清理首尾空白
+      cleanedContent = cleanedContent.trim();
+      
       // 尝试解析JSON
-      let data = JSON.parse(content);
+      let data = JSON.parse(cleanedContent);
+
+      // 字段名映射：处理不同AI提供商可能返回的不同字段名
+      // DeepSeek/Qwen 可能返回 "sentence" 而不是 "originalSentence"
+      if (data.sentence && !data.originalSentence) {
+        data.originalSentence = data.sentence;
+        delete data.sentence;
+      }
+      
+      // DeepSeek 可能返回 "mainClauseStructure" 而不是 "structureType"
+      if (data.mainClauseStructure && !data.structureType) {
+        data.structureType = data.mainClauseStructure;
+        delete data.mainClauseStructure;
+      }
+      
+      // 如果仍然缺少 originalSentence，尝试从其他字段推断或使用默认值
+      if (!data.originalSentence && data.words && Array.isArray(data.words)) {
+        // 尝试从 words 数组重建句子（作为后备方案）
+        data.originalSentence = data.words.join(' ').replace(/\s+([.,!?;:])/g, '$1');
+        console.warn('[SentenceAnalysisService] Reconstructed originalSentence from words array');
+      }
 
       // 验证必需字段
       if (!data.originalSentence || !data.words || !data.wordRoles) {
+        console.error('[SentenceAnalysisService] Missing required fields. Available fields:', Object.keys(data));
         throw new Error('Invalid response format: missing required fields');
       }
 
       return data;
     } catch (error) {
       console.error('[SentenceAnalysisService] Failed to parse AI response:', error);
+      console.error('[SentenceAnalysisService] Raw content (first 200 chars):', content.substring(0, 200));
       throw new Error(`Failed to parse AI response: ${error.message}`);
     }
   }

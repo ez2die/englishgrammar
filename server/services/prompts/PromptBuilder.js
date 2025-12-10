@@ -26,7 +26,16 @@ export class PromptBuilder {
     
     ${analysisRules}
     
-    Return the result in JSON format.`;
+    Return the result in JSON format with these exact field names:
+    - "originalSentence": The complete English sentence
+    - "words": Array of words/punctuation tokens
+    - "wordRoles": Array of grammatical roles (matching words array)
+    - "structureType": One of [主谓 (SV), 主谓宾 (SVO), 主系表 (SP), 主谓双宾 (SVOO), 主谓宾宾补 (SVOC)]
+    - "skeletonIndices": Array of indices for skeleton words
+    - "explanation": Brief explanation in Chinese
+    - "options": Array of role strings for UI buttons
+    
+    CRITICAL: Use "originalSentence" (not "sentence") and "structureType" (not "mainClauseStructure").`;
 
     // 如果有之前的句子，添加避免重复的提示
     if (context.previousSentence) {

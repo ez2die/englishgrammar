@@ -8,6 +8,7 @@
 
 ```
 docs/
+├── architecture/     # 架构设计文档（新增）
 ├── deployment/        # 部署相关文档
 ├── concurrency/       # 并发问题分析文档
 ├── fixes/            # 问题修复文档
@@ -18,6 +19,25 @@ docs/
 ---
 
 ## 📚 文档分类
+
+### 🏗️ 架构文档 (architecture/)
+
+**多AI支持架构**:
+- `MULTI_AI_ARCHITECTURE.md` - 完整的三层架构设计文档
+- `IMPLEMENTATION_PLAN.md` - 详细的实现计划和检查清单
+- `README.md` - 架构文档索引
+
+**核心设计**:
+- 三层解耦架构（AI访问层、Prompt控制层、AI应用层）
+- 多AI提供商支持（Gemini、OpenAI、Claude）
+- 智能降级策略
+- 配置管理
+
+**使用场景**:
+- 了解架构设计 → `MULTI_AI_ARCHITECTURE.md`
+- 开始实现 → `IMPLEMENTATION_PLAN.md`
+
+---
 
 ### 🚀 部署文档 (deployment/)
 
@@ -113,6 +133,9 @@ docs/
 
 **排查 API 问题**:
 → `diagnosis/GEMINI_API_DIAGNOSIS.md`
+
+**了解架构设计**:
+→ `architecture/MULTI_AI_ARCHITECTURE.md`
 
 **快速开始**:
 → 查看根目录 `README.md` 或 `QUICK_START.md`

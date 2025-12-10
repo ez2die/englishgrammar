@@ -1,4 +1,8 @@
-import 'dotenv/config';
+import { config } from 'dotenv';
+// 加载.env.local文件（优先于.env）
+config({ path: '.env.local' });
+// 如果.env.local不存在，回退到.env
+config();
 import express from 'express';
 import cors from 'cors';
 import fs from 'fs/promises';

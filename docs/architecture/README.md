@@ -5,6 +5,7 @@
 ### 核心架构设计
 - **[多AI支持架构设计](./MULTI_AI_ARCHITECTURE.md)** - 完整的三层架构设计文档
 - **[实现计划](./IMPLEMENTATION_PLAN.md)** - 详细的实现步骤和检查清单
+- **[AI提供商详情](./AI_PROVIDERS.md)** - 支持的AI提供商详细说明（Gemini、DeepSeek、Qwen、OpenAI、Claude）
 
 ## 🏗️ 架构概览
 

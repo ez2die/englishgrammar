@@ -50,6 +50,16 @@
   - [ ] 实现`AIProvider`接口
   - [ ] 错误处理
 
+- [ ] DeepSeekProvider实现
+  - [ ] DeepSeek API集成（使用OpenAI兼容格式）
+  - [ ] 实现`AIProvider`接口
+  - [ ] 错误处理
+
+- [ ] QwenProvider实现
+  - [ ] 阿里Qwen DashScope API集成
+  - [ ] 实现`AIProvider`接口
+  - [ ] 错误处理
+
 - [ ] ClaudeProvider实现（可选）
   - [ ] Claude API集成
   - [ ] 实现`AIProvider`接口
@@ -105,8 +115,12 @@
 ### 依赖安装
 
 ```bash
-npm install openai @anthropic-ai/sdk
+npm install openai @anthropic-ai/sdk @alicloud/dashscope
 ```
+
+**说明**：
+- DeepSeek 使用 OpenAI 兼容的 API，可以直接使用 `openai` SDK
+- Qwen 使用阿里云 DashScope API，需要安装 `@alicloud/dashscope`
 
 ## 📝 代码示例
 

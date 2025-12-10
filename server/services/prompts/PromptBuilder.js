@@ -3,7 +3,7 @@
  * 负责构建不同难度级别的Prompt
  */
 
-import { DifficultyLevel } from "../../../types.js";
+import { DifficultyLevel } from "../../types.js";
 import { getBasicLevelInstruction } from "./templates/basic.js";
 import { getIntermediateLevelInstruction } from "./templates/intermediate.js";
 import { getAdvancedLevelInstruction } from "./templates/advanced.js";

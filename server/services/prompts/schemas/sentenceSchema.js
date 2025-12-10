@@ -3,7 +3,7 @@
  * 用于结构化输出
  */
 
-import { SentenceStructure } from "../../../../types.js";
+import { SentenceStructure } from "../../../types.js";
 
 export function getSentenceSchema() {
   return {

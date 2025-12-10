@@ -6,7 +6,7 @@
 import { DifficultyLevel, SentenceStructure, GrammarRole } from "../../types.js";
 import { PromptBuilder } from "../prompts/PromptBuilder.js";
 import { AIProviderManager } from "../ai/manager/AIProviderManager.js";
-import { validatePrepositionalPhrases, postProcessRoles } from "../../validationService.js";
+import { validatePrepositionalPhrases, postProcessRoles } from "../validationService.js";
 import { SAMPLE_DATA_FALLBACK } from "../../constants.js";
 
 export class SentenceAnalysisService {

@@ -1,22 +1,27 @@
 /**
  * Qwen (阿里通义千问) AI Provider
- * 使用阿里云DashScope API
+ * 使用阿里云DashScope兼容模式API（OpenAI兼容格式）
  */
 
+import OpenAI from 'openai';
 import { BaseAIProvider, GenerateOptions, GenerateResult, AIError, AIErrorType } from "../base/AIProvider.js";
 
 export class QwenProvider extends BaseAIProvider {
   constructor(config) {
     super(config);
-    this.apiKey = config.apiKey;
-    this.apiBase = config.apiBase || 'https://dashscope.aliyuncs.com/api/v1';
+    // 兼容模式使用OpenAI SDK
+    this.client = config.apiKey ? new OpenAI({
+      apiKey: config.apiKey,
+      baseURL: config.apiBase || 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    }) : null;
+    this.apiBase = config.apiBase || 'https://dashscope.aliyuncs.com/compatible-mode/v1';
   }
 
   /**
    * 检查是否可用
    */
   isAvailable() {
-    return super.isAvailable() && !!this.apiKey;
+    return super.isAvailable() && this.client !== null;
   }
 
   /**
@@ -37,55 +42,34 @@ export class QwenProvider extends BaseAIProvider {
     }
 
     const opts = new GenerateOptions(options);
-    const model = opts.model || this.config.model || 'qwen-turbo';
+    const model = opts.model || this.config.model || 'qwen-flash';
 
     try {
-      // Qwen DashScope API endpoint
-      const url = `${this.apiBase}/services/aigc/text-generation/generation`;
-      
-      const requestBody = {
+      // 使用OpenAI兼容格式（兼容模式）
+      const requestOptions = {
         model: model,
-        input: {
-          messages: [
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ],
-        },
-        parameters: {
-          temperature: opts.temperature,
-          max_tokens: opts.maxTokens,
-        },
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: opts.temperature,
+        max_tokens: opts.maxTokens,
       };
 
-      // 如果提供了schema且需要JSON格式，添加result_format
-      // Qwen的JSON Schema格式需要特殊处理
+      // 如果提供了schema且需要JSON格式，添加response_format
       if (opts.schema && opts.responseFormat === 'json') {
-        // Qwen使用result_format参数，支持json_object和json_schema两种模式
-        requestBody.parameters.result_format = 'json_object';
-        // 在prompt中明确要求JSON格式（Qwen的json_object模式会自动处理）
-        requestBody.input.messages[0].content = `${prompt}\n\nPlease respond in valid JSON format matching the provided schema.`;
+        requestOptions.response_format = {
+          type: 'json_object',
+        };
+        // 将schema信息添加到prompt中（OpenAI格式需要）
+        requestOptions.messages[0].content = `${prompt}\n\nPlease respond in valid JSON format matching the provided schema.`;
       }
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify(requestBody),
-      });
+      const response = await this.client.chat.completions.create(requestOptions);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Qwen API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      // Qwen API响应格式：data.output.choices[0].message.content
-      const content = data.output?.choices?.[0]?.message?.content || data.output?.text;
+      const content = response.choices[0]?.message?.content;
       if (!content) {
         throw new AIError(
           'Empty response from Qwen API',
@@ -103,12 +87,12 @@ export class QwenProvider extends BaseAIProvider {
         model,
         this.name,
         {
-          promptTokens: data.usage?.input_tokens,
-          completionTokens: data.usage?.output_tokens,
-          totalTokens: data.usage?.total_tokens,
+          promptTokens: response.usage?.prompt_tokens,
+          completionTokens: response.usage?.completion_tokens,
+          totalTokens: response.usage?.total_tokens,
         },
         {
-          requestId: data.request_id,
+          finishReason: response.choices[0]?.finish_reason,
         }
       );
 

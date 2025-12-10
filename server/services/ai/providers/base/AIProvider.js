@@ -34,6 +34,7 @@ export class GenerateOptions {
     this.maxTokens = options.maxTokens ?? 2000;
     this.responseFormat = options.responseFormat ?? 'json';
     this.schema = options.schema; // JSON Schema for structured output
+    this.systemPrompt = options.systemPrompt; // System prompt for OpenAI-compatible APIs
     this.timeout = options.timeout ?? 30000; // 30 seconds default
   }
 }

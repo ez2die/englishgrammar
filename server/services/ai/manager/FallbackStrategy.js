@@ -50,8 +50,10 @@ export class FallbackStrategy {
             await this.delay(this.config.retryDelay * attempt);
           }
 
+          const startTime = Date.now();
           const result = await provider.generate(prompt, options);
-          console.log(`[Fallback] Success with ${provider.name}`);
+          const duration = Date.now() - startTime;
+          console.log(`[Fallback] Success with ${provider.name} (${duration}ms)`);
           return result;
 
         } catch (error) {

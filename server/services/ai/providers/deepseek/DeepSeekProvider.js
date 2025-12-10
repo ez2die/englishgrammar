@@ -45,14 +45,40 @@ export class DeepSeekProvider extends BaseAIProvider {
     const model = opts.model || this.config.model || 'deepseek-v3.2';
 
     try {
+      // 构建 messages 数组，支持 system prompt（最佳实践）
+      const messages = [];
+      
+      // 添加 system prompt（如果提供）
+      if (opts.systemPrompt) {
+        messages.push({
+          role: 'system',
+          content: opts.systemPrompt,
+        });
+      }
+      
+      // 构建 user prompt，包含 schema 说明（如果提供）
+      let userContent = prompt;
+      if (opts.schema && opts.responseFormat === 'json') {
+        // 将 schema 的关键字段要求明确添加到 prompt 中
+        const schemaFields = Object.keys(opts.schema.properties || {});
+        const requiredFields = opts.schema.required || [];
+        userContent = `${prompt}
+
+IMPORTANT: Return a valid JSON object with these exact field names:
+${requiredFields.map(field => `- "${field}": ${opts.schema.properties[field]?.description || 'required'}`).join('\n')}
+
+The JSON must use these exact field names: ${requiredFields.join(', ')}.
+Do NOT use alternative names like "sentence" or "mainClauseStructure".`;
+      }
+      
+      messages.push({
+        role: 'user',
+        content: userContent,
+      });
+
       const requestOptions = {
         model: model,
-        messages: [
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
+        messages: messages,
         temperature: opts.temperature,
         max_tokens: opts.maxTokens,
       };
@@ -62,8 +88,6 @@ export class DeepSeekProvider extends BaseAIProvider {
         requestOptions.response_format = {
           type: 'json_object',
         };
-        // 将schema信息添加到prompt中（OpenAI格式需要）
-        requestOptions.messages[0].content = `${prompt}\n\nPlease respond in valid JSON format matching the provided schema.`;
       }
 
       const response = await this.client.chat.completions.create(requestOptions);

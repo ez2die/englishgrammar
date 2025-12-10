@@ -9,10 +9,12 @@ import { BaseAIProvider, GenerateOptions, GenerateResult, AIError, AIErrorType }
 export class DeepSeekProvider extends BaseAIProvider {
   constructor(config) {
     super(config);
+    // 使用DashScope兼容模式API（OpenAI兼容格式）
     this.client = config.apiKey ? new OpenAI({
       apiKey: config.apiKey,
-      baseURL: config.apiBase || 'https://api.deepseek.com',
+      baseURL: config.apiBase || 'https://dashscope.aliyuncs.com/compatible-mode/v1',
     }) : null;
+    this.apiBase = config.apiBase || 'https://dashscope.aliyuncs.com/compatible-mode/v1';
   }
 
   /**
@@ -40,7 +42,7 @@ export class DeepSeekProvider extends BaseAIProvider {
     }
 
     const opts = new GenerateOptions(options);
-    const model = opts.model || this.config.model || 'deepseek-chat';
+    const model = opts.model || this.config.model || 'deepseek-v3.2';
 
     try {
       const requestOptions = {

@@ -40,6 +40,7 @@ export class QwenProvider extends BaseAIProvider {
     const model = opts.model || this.config.model || 'qwen-turbo';
 
     try {
+      // Qwen DashScope API endpoint
       const url = `${this.apiBase}/services/aigc/text-generation/generation`;
       
       const requestBody = {
@@ -83,8 +84,8 @@ export class QwenProvider extends BaseAIProvider {
 
       const data = await response.json();
       
-      // Qwen API响应格式
-      const content = data.output?.choices?.[0]?.message?.content;
+      // Qwen API响应格式：data.output.choices[0].message.content
+      const content = data.output?.choices?.[0]?.message?.content || data.output?.text;
       if (!content) {
         throw new AIError(
           'Empty response from Qwen API',

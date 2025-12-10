@@ -1,12 +1,17 @@
+// ============================================
+// 修复并发问题的代码示例
+// ============================================
+
+// 方案 1: 使用 proper-lockfile (推荐)
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import lockfile from 'proper-lockfile';
-import rateLimit from 'express-rate-limit';
+import lockfile from 'proper-lockfile';  // 需要: npm install proper-lockfile
 import { generateSentenceAnalysis } from './server/services/geminiService.js';
+import rateLimit from 'express-rate-limit';  // 需要: npm install express-rate-limit
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,38 +27,19 @@ const isProduction = process.env.NODE_ENV === 'production';
 app.use(cors());
 app.use(express.json());
 
-// 信任代理（如果使用 Nginx 反向代理）
-app.set('trust proxy', 1);
-
-// API 限流中间件 - 限制 Gemini API 调用频率
-// 调整为更宽松的限制：每5分钟30次请求，更适合正常使用
+// API 限流中间件
 const generateLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 分钟
-  max: 30, // 每个 IP 最多 30 次请求（5分钟内）
-  message: { 
-    error: '请求过于频繁，请稍后再试。',
-    retryAfter: 300 // 建议等待时间（秒）
-  },
+  windowMs: 60 * 1000, // 1 分钟
+  max: 10, // 每个 IP 最多 10 次请求
+  message: { error: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => {
-    // 如果有有效的 session token，可以考虑放宽限制
-    return false;
-  },
-  handler: (req, res) => {
-    res.status(429).json({
-      error: '请求过于频繁，请稍后再试。',
-      message: '为了确保服务质量，请稍等片刻后再试。',
-      retryAfter: 300
-    });
-  }
 });
 
 // Ensure questions directory exists
 async function ensureQuestionsDir() {
   try {
     await fs.mkdir(QUESTIONS_DIR, { recursive: true });
-    // Initialize empty bank if file doesn't exist
     try {
       await fs.access(QUESTIONS_FILE);
     } catch {
@@ -64,7 +50,7 @@ async function ensureQuestionsDir() {
   }
 }
 
-// Read questions from file (添加重试机制)
+// 修复后的读取函数（添加重试机制）
 async function readQuestions() {
   let retries = 3;
   while (retries > 0) {
@@ -75,10 +61,6 @@ async function readQuestions() {
       retries--;
       if (retries === 0) {
         console.error('Failed to read questions after retries:', error);
-        // 如果文件不存在，返回空数组
-        if (error.code === 'ENOENT') {
-          return [];
-        }
         throw error;
       }
       // 等待后重试
@@ -87,7 +69,7 @@ async function readQuestions() {
   }
 }
 
-// Write questions to file (使用文件锁确保并发安全)
+// 修复后的写入函数（使用文件锁）
 async function writeQuestions(questions) {
   let release;
   try {
@@ -126,23 +108,61 @@ async function writeQuestions(questions) {
     
     const updatedQuestions = Array.from(questionMap.values());
     
-    // 原子写入：先写入临时文件，然后原子性地重命名（避免写入过程中文件损坏）
-    const tempFile = QUESTIONS_FILE + '.' + Date.now() + '.tmp';
-    try {
-      await fs.writeFile(tempFile, JSON.stringify(updatedQuestions, null, 2), 'utf-8');
-      await fs.rename(tempFile, QUESTIONS_FILE);
-    } catch (writeError) {
-      // 如果写入失败，清理临时文件
-      try {
-        await fs.unlink(tempFile).catch(() => {});
-      } catch {}
-      throw writeError;
-    }
+    // 原子写入（先写入临时文件，然后重命名）
+    const tempFile = QUESTIONS_FILE + '.tmp';
+    await fs.writeFile(tempFile, JSON.stringify(updatedQuestions, null, 2), 'utf-8');
+    await fs.rename(tempFile, QUESTIONS_FILE);
     
     return true;
   } catch (error) {
     console.error('Failed to write questions:', error);
     return false;
+  } finally {
+    if (release) {
+      try {
+        await release();
+      } catch (e) {
+        console.error('Failed to release lock:', e);
+      }
+    }
+  }
+}
+
+// 追加单个问题（优化版本）
+async function appendQuestion(newQuestion) {
+  let release;
+  try {
+    // 获取文件锁
+    release = await lockfile.lock(QUESTIONS_FILE, {
+      retries: {
+        retries: 20,
+        minTimeout: 100,
+        maxTimeout: 500
+      },
+      lockfilePath: QUESTIONS_FILE + '.lock'
+    });
+    
+    // 读取最新数据
+    const questions = await readQuestions();
+    
+    // 检查是否已存在
+    const exists = questions.some(q => q.originalSentence === newQuestion.originalSentence);
+    if (exists) {
+      return { success: false, message: 'Question already exists', count: questions.length };
+    }
+    
+    // 添加新问题
+    questions.push(newQuestion);
+    
+    // 原子写入
+    const tempFile = QUESTIONS_FILE + '.tmp';
+    await fs.writeFile(tempFile, JSON.stringify(questions, null, 2), 'utf-8');
+    await fs.rename(tempFile, QUESTIONS_FILE);
+    
+    return { success: true, message: 'Question saved', count: questions.length };
+  } catch (error) {
+    console.error('Failed to append question:', error);
+    return { success: false, message: 'Failed to save question', error: error.message };
   } finally {
     if (release) {
       try {
@@ -166,59 +186,23 @@ app.get('/api/questions', async (req, res) => {
   }
 });
 
-// POST /api/questions - Save a new question (优化版本，使用原子操作)
+// POST /api/questions - Save a new question (修复后)
 app.post('/api/questions', async (req, res) => {
-  let release;
   try {
     const newQuestion = req.body;
+    const result = await appendQuestion(newQuestion);
     
-    // 获取文件锁
-    release = await lockfile.lock(QUESTIONS_FILE, {
-      retries: {
-        retries: 20,
-        minTimeout: 100,
-        maxTimeout: 500
-      },
-      lockfilePath: QUESTIONS_FILE + '.lock'
-    });
-    
-    // 读取最新数据（在锁保护下读取，确保数据是最新的）
-    const questions = await readQuestions();
-    
-    // 检查是否已存在
-    const exists = questions.some(q => q.originalSentence === newQuestion.originalSentence);
-    if (exists) {
-      return res.json({ message: 'Question already exists', count: questions.length });
-    }
-    
-    // 添加新问题
-    questions.push(newQuestion);
-    
-    // 原子写入：先写入临时文件，然后原子性地重命名
-    const tempFile = QUESTIONS_FILE + '.' + Date.now() + '.tmp';
-    try {
-      await fs.writeFile(tempFile, JSON.stringify(questions, null, 2), 'utf-8');
-      await fs.rename(tempFile, QUESTIONS_FILE);
-    } catch (writeError) {
-      // 如果写入失败，清理临时文件
-      try {
-        await fs.unlink(tempFile).catch(() => {});
-      } catch {}
-      throw writeError;
-    }
-    
-    res.json({ message: 'Question saved', count: questions.length });
-  } catch (error) {
-    console.error('Failed to save question:', error);
-    res.status(500).json({ error: 'Failed to save question', details: error.message });
-  } finally {
-    if (release) {
-      try {
-        await release();
-      } catch (e) {
-        console.error('Failed to release lock:', e);
+    if (result.success) {
+      res.json({ message: result.message, count: result.count });
+    } else {
+      if (result.message === 'Question already exists') {
+        res.json({ message: result.message, count: result.count });
+      } else {
+        res.status(500).json({ error: result.message });
       }
     }
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to save question' });
   }
 });
 
@@ -284,7 +268,7 @@ app.get('/api/questions/size', async (req, res) => {
   }
 });
 
-// POST /api/generate - Generate sentence analysis using Gemini (添加限流保护)
+// POST /api/generate - Generate sentence analysis using Gemini (添加限流)
 app.post('/api/generate', generateLimiter, async (req, res) => {
   try {
     const { level } = req.body;
@@ -299,30 +283,12 @@ app.post('/api/generate', generateLimiter, async (req, res) => {
   } catch (error) {
     console.error("Failed to generate sentence analysis:", error);
     
-    // 检查是否是限流错误（从 Gemini API 返回的）
-    if (error.status === 429 || (error.message && error.message.includes('quota'))) {
-      return res.status(503).json({ 
-        error: 'API 配额已用完',
-        message: '生成服务暂时不可用，建议使用已保存的问题。',
-        code: 'GEMINI_QUOTA_EXCEEDED',
-        fallback: '请从问题库中选择问题'
-      });
+    // 检查是否是限流错误
+    if (error.status === 429) {
+      return res.status(429).json({ error: 'Too many requests, please try again later.' });
     }
     
-    // 检查是否是连接错误
-    if (error.message && (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('ECONNREFUSED'))) {
-      return res.status(503).json({ 
-        error: '连接失败',
-        message: '无法连接到生成服务，请检查网络连接或稍后再试。',
-        fallback: '您可以尝试从问题库中选择已有问题。'
-      });
-    }
-    
-    res.status(500).json({ 
-      error: '生成失败', 
-      message: '生成句子分析时出错，请稍后再试。',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    res.status(500).json({ error: 'Failed to generate sentence analysis', details: error.message });
   }
 });
 
@@ -332,7 +298,6 @@ async function startServer() {
   
   // Serve static files in production
   if (isProduction) {
-    // Check if dist directory exists
     try {
       await fs.access(DIST_DIR);
       app.use(express.static(DIST_DIR));
@@ -356,10 +321,7 @@ async function startServer() {
       console.log(`🌐 Production mode enabled`);
     }
     console.log(`🔒 File locking enabled for concurrent safety`);
-    console.log(`🚦 API rate limiting enabled (30 requests per 5 minutes per IP)`);
-    console.log(`🔒 Trust proxy enabled for Nginx compatibility`);
   });
 }
 
 startServer().catch(console.error);
-

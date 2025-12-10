@@ -38,3 +38,31 @@ Questions are now stored in the file system:
 - **Location**: `questions/bank.json`
 - **Format**: JSON array of question objects
 - The backend API server handles all file operations automatically.
+
+## Documentation
+
+📚 **完整文档**: 查看 [`docs/`](./docs/README.md) 目录
+
+**快速导航**:
+- 🚀 [部署文档](./docs/deployment/PRODUCTION_DEPLOYMENT.md) - 生产环境部署指南
+- ⚡ [并发问题分析](./docs/concurrency/并发问题分析-中文.md) - 并发问题详细分析
+- 🔧 [问题修复记录](./docs/fixes/FIX_APPLIED.md) - 已修复的问题
+- 🔍 [诊断报告](./docs/diagnosis/GEMINI_API_DIAGNOSIS.md) - API 诊断报告
+
+**快速开始**: 查看 [`QUICK_START.md`](./QUICK_START.md)
+
+---
+
+## 📋 文档目录
+
+所有技术文档已按类别整理到 `docs/` 目录：
+
+```
+docs/
+├── deployment/    # 部署相关（8个文件）
+├── concurrency/   # 并发问题（7个文件）
+├── fixes/         # 问题修复（6个文件）
+└── diagnosis/     # 诊断报告（4个文件）
+```
+
+查看完整文档索引: [`docs/README.md`](./docs/README.md)

@@ -6,7 +6,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import lockfile from 'proper-lockfile';
 import rateLimit from 'express-rate-limit';
-import { generateSentenceAnalysis } from './server/services/geminiService.js';
+// 旧版导入（保留用于向后兼容）
+// import { generateSentenceAnalysis } from './server/services/geminiService.js';
+
+// 新版多AI支持
+import { initAIService } from './server/services/ai/init.js';
+import { SentenceAnalysisService } from './server/services/application/SentenceAnalysisService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,6 +22,19 @@ const QUESTIONS_DIR = path.join(__dirname, 'questions');
 const QUESTIONS_FILE = path.join(QUESTIONS_DIR, 'bank.json');
 const DIST_DIR = path.join(__dirname, 'dist');
 const isProduction = process.env.NODE_ENV === 'production';
+
+// 初始化AI服务
+let aiProviderManager = null;
+let sentenceAnalysisService = null;
+
+try {
+  aiProviderManager = initAIService();
+  sentenceAnalysisService = new SentenceAnalysisService(aiProviderManager);
+  console.log('[Server] AI service initialized successfully');
+} catch (error) {
+  console.error('[Server] Failed to initialize AI service:', error);
+  // 继续启动服务器，但AI功能可能不可用
+}
 
 // Middleware
 app.use(cors());
@@ -284,36 +302,74 @@ app.get('/api/questions/size', async (req, res) => {
   }
 });
 
-// POST /api/generate - Generate sentence analysis using Gemini (添加限流保护)
+// POST /api/generate - Generate sentence analysis using multi-AI providers (添加限流保护)
 app.post('/api/generate', generateLimiter, async (req, res) => {
   try {
-    const { level } = req.body;
+    const { level, preferredProvider } = req.body;
     
     if (!level) {
       return res.status(400).json({ error: 'Level is required' });
     }
 
-    const result = await generateSentenceAnalysis(level);
+    // 检查AI服务是否已初始化
+    if (!sentenceAnalysisService) {
+      return res.status(503).json({
+        error: 'AI服务未初始化',
+        message: 'AI服务初始化失败，请检查配置。',
+        fallback: '请从问题库中选择问题'
+      });
+    }
+
+    // 使用新的SentenceAnalysisService
+    const result = await sentenceAnalysisService.generateSentenceAnalysis(level, {
+      preferredProvider: preferredProvider || null,
+      enableFallback: true,
+    });
+
     res.json(result);
     
   } catch (error) {
     console.error("Failed to generate sentence analysis:", error);
     
-    // 检查是否是限流错误（从 Gemini API 返回的）
-    if (error.status === 429 || (error.message && error.message.includes('quota'))) {
+    // 处理AllProvidersFailedError
+    if (error.name === 'AllProvidersFailedError') {
+      return res.status(503).json({
+        error: '所有AI提供商都不可用',
+        message: '所有AI服务暂时不可用，建议使用已保存的问题。',
+        code: 'ALL_PROVIDERS_FAILED',
+        fallback: '请从问题库中选择问题',
+        triedProviders: error.providers,
+      });
+    }
+
+    // 检查是否是配额错误
+    if (error.type === 'QUOTA_EXCEEDED' || error.status === 503 || (error.message && error.message.includes('quota'))) {
       return res.status(503).json({ 
         error: 'API 配额已用完',
         message: '生成服务暂时不可用，建议使用已保存的问题。',
-        code: 'GEMINI_QUOTA_EXCEEDED',
+        code: 'QUOTA_EXCEEDED',
+        provider: error.provider,
         fallback: '请从问题库中选择问题'
       });
     }
     
+    // 检查是否是限流错误
+    if (error.type === 'RATE_LIMIT' || error.status === 429) {
+      return res.status(429).json({
+        error: '请求过于频繁',
+        message: '请稍后再试。',
+        provider: error.provider,
+        retryAfter: 60,
+      });
+    }
+    
     // 检查是否是连接错误
-    if (error.message && (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('ECONNREFUSED'))) {
+    if (error.type === 'NETWORK_ERROR' || error.type === 'TIMEOUT' || 
+        (error.message && (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('ECONNREFUSED')))) {
       return res.status(503).json({ 
         error: '连接失败',
         message: '无法连接到生成服务，请检查网络连接或稍后再试。',
+        provider: error.provider,
         fallback: '您可以尝试从问题库中选择已有问题。'
       });
     }
@@ -321,6 +377,7 @@ app.post('/api/generate', generateLimiter, async (req, res) => {
     res.status(500).json({ 
       error: '生成失败', 
       message: '生成句子分析时出错，请稍后再试。',
+      provider: error.provider || 'unknown',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }

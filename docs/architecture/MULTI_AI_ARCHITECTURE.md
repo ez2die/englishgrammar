@@ -2,7 +2,7 @@
 
 ## 📋 架构目标
 
-1. **支持多AI提供商**：Gemini、OpenAI、Claude等
+1. **支持多AI提供商**：Gemini、DeepSeek、Qwen、OpenAI、Claude等
 2. **默认AI和降级方案**：主AI失败时自动切换到备用AI
 3. **三层解耦架构**：
    - **AI访问层**：负责与各AI提供商的API交互
@@ -66,6 +66,10 @@ server/
 │   │   │   │   └── GeminiProvider.js
 │   │   │   ├── openai/
 │   │   │   │   └── OpenAIProvider.js
+│   │   │   ├── deepseek/
+│   │   │   │   └── DeepSeekProvider.js
+│   │   │   ├── qwen/
+│   │   │   │   └── QwenProvider.js
 │   │   │   └── claude/
 │   │   │       └── ClaudeProvider.js
 │   │   ├── manager/
@@ -218,12 +222,12 @@ export interface ServiceOptions {
 1. 尝试使用默认AI（Gemini）
    ↓ 失败
 2. 检查错误类型
-   ├─ 配额耗尽 → 切换到备用AI（OpenAI）
+   ├─ 配额耗尽 → 切换到备用AI（DeepSeek/Qwen）
    ├─ 网络错误 → 重试当前AI
    ├─ 超时 → 切换到备用AI
    └─ 其他错误 → 记录日志，尝试备用AI
    ↓ 失败
-3. 尝试备用AI列表（按优先级）
+3. 尝试备用AI列表（按优先级：DeepSeek → Qwen → OpenAI → Claude）
    ↓ 全部失败
 4. 返回错误或使用本地fallback数据
 ```
@@ -435,9 +439,11 @@ export const AI_CONFIG = {
 3. ✅ 集成Prompt控制层
 
 ### Phase 4: 多AI支持
-1. ✅ 实现OpenAIProvider
-2. ✅ 实现ClaudeProvider（可选）
-3. ✅ 实现AIProviderManager
+1. ✅ 实现DeepSeekProvider（高优先级，性价比高）
+2. ✅ 实现QwenProvider（高优先级，中文友好）
+3. ✅ 实现OpenAIProvider
+4. ✅ 实现ClaudeProvider（可选）
+5. ✅ 实现AIProviderManager
 
 ### Phase 5: 降级策略
 1. ✅ 实现FallbackStrategy
@@ -457,6 +463,12 @@ export const AI_CONFIG = {
 - 所有AI提供商实现相同的`AIProvider`接口
 - 统一的错误处理和响应格式
 - 便于添加新的AI提供商
+- **支持的AI提供商**：
+  - Gemini (Google) - 默认
+  - DeepSeek - 主要备用（性价比高）
+  - Qwen (阿里通义千问) - 主要备用（中文友好）
+  - OpenAI (GPT) - 备用
+  - Claude (Anthropic) - 可选备用
 
 ### 2. 降级策略
 - **优先级降级**：按配置的优先级顺序尝试

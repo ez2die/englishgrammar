@@ -26,6 +26,11 @@ export enum DifficultyLevel {
   ADVANCED = 'Advanced', // Level 3: With clauses
 }
 
+export enum Theme {
+  DEFAULT = 'default',    // 默认主题（活力）
+  FRESH = 'fresh',        // 小清新主题
+}
+
 export interface WordToken {
   id: number;
   text: string;

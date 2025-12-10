@@ -1,5 +1,6 @@
 import React from 'react';
-import { GrammarRole } from '../types';
+import { GrammarRole, Theme } from '../types';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface WordPillProps {
   text: string;
@@ -28,13 +29,17 @@ const WordPill: React.FC<WordPillProps> = ({
   draggable,
   onDragStart
 }) => {
+  const { theme } = useTheme();
+  const isFresh = theme === Theme.FRESH;
   
-  let baseClasses = "inline-flex items-center justify-center px-3 py-2 m-0.5 rounded-xl text-sm font-bold transition-all duration-200 cursor-pointer select-none touch-manipulation active:scale-95";
+  let baseClasses = "inline-flex items-center justify-center px-3 py-2 sm:px-3 sm:py-2 m-0.5 rounded-xl text-sm sm:text-base font-bold transition-all duration-200 cursor-pointer select-none touch-manipulation active:scale-[0.95] min-h-[36px] sm:min-h-[32px]";
   
   let colorClasses = "bg-white border-2 border-gray-200 text-gray-700 shadow-sm";
 
   if (isSelected) {
-    colorClasses = "bg-purple-100 border-2 border-purple-400 text-purple-700 shadow-md scale-105";
+    colorClasses = isFresh 
+      ? "bg-emerald-100 border-2 border-emerald-400 text-emerald-700 shadow-md scale-105"
+      : "bg-purple-100 border-2 border-purple-400 text-purple-700 shadow-md scale-105";
   } else if (isSkeletonMode) {
      if (isInSkeletonSlot) {
         colorClasses = "bg-gray-100 border-2 border-gray-200 text-gray-400 shadow-inner"; 
@@ -44,7 +49,9 @@ const WordPill: React.FC<WordPillProps> = ({
      if (isCorrect === true) {
         colorClasses = "bg-green-400 border-2 border-green-500 text-white shadow-lg animate-pulse";
      } else if (isCorrect === false) {
-        colorClasses = "bg-red-400 border-2 border-red-500 text-white shadow-lg";
+        colorClasses = isFresh
+          ? "bg-rose-400 border-2 border-rose-500 text-white shadow-lg"
+          : "bg-red-400 border-2 border-red-500 text-white shadow-lg";
      } else if (assignedRole) {
         colorClasses = "bg-white border-2 border-gray-200 text-gray-700 text-xs py-1.5 px-2 shadow-sm";
      }

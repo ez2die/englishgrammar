@@ -41,9 +41,17 @@ const App: React.FC = () => {
   const phase2SectionRef = useRef<HTMLElement>(null);
   // Ref for sticky sentence card to calculate its height
   const stickySentenceRef = useRef<HTMLDivElement>(null);
+  // Ref for result section
+  const resultRef = useRef<HTMLDivElement>(null);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const initGame = async (level: DifficultyLevel) => {
     const previousSentence = data?.originalSentence;
+
+    scrollToTop();
 
     setLoading(true);
     setSubmitted(false);
@@ -473,7 +481,7 @@ const App: React.FC = () => {
     });
     
     const structureCorrect = selectedStructure === currentData.structureType;
-    const allWordsCorrect = totalCount > 0 && correctCount === totalCount;
+    const allWordsCorrect = correctCount === totalCount; // vacuous truth: zero non-connective words counts as correct
     const fullyCorrect = allWordsCorrect && structureCorrect;
 
     // 只有在全部正确（角色+结构）时才积分；否则 0 分
@@ -485,8 +493,15 @@ const App: React.FC = () => {
     setStreak(prev => (fullyCorrect ? prev + 1 : 0));
     
     setTimeout(() => {
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    }, 100);
+      if (resultRef.current) {
+        const rect = resultRef.current.getBoundingClientRect();
+        const currentY = window.scrollY || window.pageYOffset;
+        const target = currentY + rect.top - 80; // leave space for header
+        window.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      }
+    }, 150);
   };
 
   // Calculate progress - New order: Structure -> Combined Skeleton & Word Classification
@@ -752,8 +767,194 @@ const App: React.FC = () => {
     .map((_, idx) => idx)
     .filter(idx => !assignedRoles[idx] && !skeletonIndicesSet.has(idx));
 
+  const evaluateResult = () => {
+    if (!submitted || !currentData) return null;
+    const correctSkeletonSet = new Set(currentData.skeletonIndices);
+    const userSkeletonSet = new Set(Object.values(skeletonSlots).flat());
+    let correctCount = 0;
+    let totalCount = 0;
+    currentData.words.forEach((_, idx) => {
+      const correctRole = currentData.wordRoles[idx];
+      if (correctRole !== GrammarRole.CONNECTIVE) {
+        totalCount++;
+        const userRole = assignedRoles[idx];
+        const isUserSkeleton = userSkeletonSet.has(idx);
+        const isCorrectSkeleton = correctSkeletonSet.has(idx);
+        if ((isUserSkeleton && isCorrectSkeleton) || userRole === correctRole) {
+          correctCount++;
+        }
+      }
+    });
+    const structureCorrect = selectedStructure === currentData.structureType;
+    const allWordsCorrect = correctCount === totalCount;
+    const fullyCorrect = allWordsCorrect && structureCorrect;
+    const roleAccuracy = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
+    const status = fullyCorrect ? 'perfect' : (structureCorrect || correctCount > 0 ? 'partial' : 'incorrect');
+    return { correctCount, totalCount, roleAccuracy, structureCorrect, fullyCorrect, status };
+  };
+
   const progress = getProgress();
   const isFresh = theme === Theme.FRESH;
+  const resultMeta = evaluateResult();
+
+  const renderAnnotatedSentence = () => {
+    const skeletonSet = new Set(currentData.skeletonIndices);
+    const getBlockType = (idx: number) => {
+      if (skeletonSet.has(idx)) return 'skeleton';
+      const role = currentData.wordRoles[idx];
+      switch (role) {
+        case GrammarRole.ATTRIBUTE:
+          return 'attribute';
+        case GrammarRole.ADVERBIAL:
+          return 'adverbial';
+        case GrammarRole.ATTRIBUTIVE_CLAUSE:
+          return 'attr-clause';
+        case GrammarRole.ADVERBIAL_CLAUSE:
+          return 'adv-clause';
+        case GrammarRole.CONNECTIVE:
+          return 'connective';
+        default:
+          return 'other';
+      }
+    };
+
+    type BlockType = 'skeleton' | 'attribute' | 'adverbial' | 'attr-clause' | 'adv-clause' | 'connective' | 'other';
+    type Block = { type: BlockType; tokens: string[]; indices: number[]; role?: GrammarRole };
+
+    const blocks: Block[] = [];
+
+    currentData.words.forEach((word, idx) => {
+      const isPunc = isPunctuation(word);
+      const type = getBlockType(idx);
+
+      // Punctuation: attach to previous block if any
+      if (isPunc) {
+        if (blocks.length > 0) {
+          blocks[blocks.length - 1].tokens.push(word);
+        } else {
+          blocks.push({ type: 'other', tokens: [word], indices: [] });
+        }
+        return;
+      }
+
+      const last = blocks[blocks.length - 1];
+      if (last && last.type === type) {
+        // 对 skeleton，若角色不同则拆块，保持颜色区分
+        if (type === 'skeleton') {
+          const role = currentData.wordRoles[idx];
+          if (last.role && last.role === role) {
+            last.tokens.push(word);
+            last.indices.push(idx);
+          } else {
+            blocks.push({ type, tokens: [word], indices: [idx], role });
+          }
+        } else {
+          last.tokens.push(word);
+          last.indices.push(idx);
+        }
+      } else {
+        const role = type === 'skeleton' ? currentData.wordRoles[idx] : undefined;
+        blocks.push({ type, tokens: [word], indices: [idx], role });
+      }
+    });
+
+    const joinTokens = (tokens: string[]) => {
+      return tokens.reduce((acc, t, i) => {
+        const isP = isPunctuation(t);
+        const prevIsP = i > 0 ? isPunctuation(tokens[i - 1]) : true;
+        const spacer = i > 0 && !isP && !prevIsP ? ' ' : '';
+        return acc + spacer + t;
+      }, '');
+    };
+
+    const getSkeletonClass = (role?: GrammarRole) => {
+      const base = 'font-black underline decoration-2';
+      switch (role) {
+        case GrammarRole.SUBJECT:
+          return `${base} ${isFresh ? 'decoration-emerald-500 text-emerald-900' : 'decoration-emerald-300 text-emerald-100'}`;
+        case GrammarRole.PREDICATE:
+        case GrammarRole.LINK_VERB:
+          return `${base} ${isFresh ? 'decoration-sky-500 text-sky-900' : 'decoration-sky-300 text-sky-100'}`;
+        case GrammarRole.OBJECT:
+          return `${base} ${isFresh ? 'decoration-amber-500 text-amber-900' : 'decoration-amber-300 text-amber-100'}`;
+        case GrammarRole.PREDICATIVE:
+          return `${base} ${isFresh ? 'decoration-purple-500 text-purple-900' : 'decoration-purple-300 text-purple-100'}`;
+        case GrammarRole.COMPLEMENT:
+          return `${base} ${isFresh ? 'decoration-rose-500 text-rose-900' : 'decoration-rose-300 text-rose-100'}`;
+        default:
+          return `${base} ${isFresh ? 'decoration-emerald-500 text-emerald-900' : 'decoration-pink-500 text-pink-900'}`;
+      }
+    };
+
+    const renderBlock = (block: Block, key: number) => {
+      const content = joinTokens(block.tokens);
+      switch (block.type) {
+        case 'skeleton':
+          return (
+            <span key={key} className="inline-flex items-center gap-1">
+              <span className={getSkeletonClass(block.role)}>
+                {content}
+              </span>
+            </span>
+          );
+        case 'attribute':
+          return (
+            <span key={key} className={`inline-flex items-center ${isFresh ? 'text-sky-800' : 'text-blue-200'}`}>
+              <span className="opacity-80">［</span>
+              <span className="font-semibold">{content}</span>
+              <span className="opacity-80">］</span>
+            </span>
+          );
+        case 'adverbial':
+          return (
+            <span key={key} className={`inline-flex items-center ${isFresh ? 'text-amber-700' : 'text-amber-200'}`}>
+              <span className="opacity-80">{'{'}</span>
+              <span className="font-semibold">{content}</span>
+              <span className="opacity-80">{'}'}</span>
+            </span>
+          );
+        case 'attr-clause':
+          return (
+            <span key={key} className={`inline-flex items-center ${isFresh ? 'text-purple-700 italic' : 'text-purple-200 italic'}`}>
+              <span className="opacity-80">[AC:</span>
+              <span className="ml-1">{content}</span>
+              <span className="opacity-80">]</span>
+            </span>
+          );
+        case 'adv-clause':
+          return (
+            <span key={key} className={`inline-flex items-center ${isFresh ? 'text-rose-700 italic' : 'text-rose-200 italic'}`}>
+              <span className="opacity-80">{'{ADV:'}</span>
+              <span className="ml-1">{content}</span>
+              <span className="opacity-80">{'}'}</span>
+            </span>
+          );
+        case 'connective':
+          return (
+            <span key={key} className="inline-flex items-center text-gray-400 italic">
+              {content}
+            </span>
+          );
+        default:
+          return (
+            <span key={key} className="inline-flex items-center text-gray-800">
+              {content}
+            </span>
+          );
+      }
+    };
+
+    return (
+      <div className="flex flex-wrap gap-2 items-center">
+        {blocks.map((block, idx) => (
+          <React.Fragment key={idx}>
+            {renderBlock(block, idx)}
+            {idx < blocks.length - 1 && <span className="text-gray-300">|</span>}
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  };
   
   const gameBg = isFresh
     ? 'bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50'
@@ -1169,21 +1370,50 @@ const App: React.FC = () => {
         )}
 
         {/* Results */}
-        {showResult && (
-          <div className={`${isFresh ? 'bg-gradient-to-br from-emerald-500 to-cyan-500' : 'bg-gradient-to-br from-purple-600 to-pink-600'} text-white rounded-3xl p-6 shadow-2xl space-y-4 animate-fade-in`}>
+        {showResult && resultMeta && (
+          <div ref={resultRef} className={`${isFresh ? 'bg-gradient-to-br from-emerald-500 to-cyan-500' : 'bg-gradient-to-br from-purple-600 to-pink-600'} text-white rounded-3xl p-6 shadow-2xl space-y-5 animate-fade-in`}>
             <h3 className="text-2xl font-black flex items-center gap-2">
-              <span>🎉</span> Results
+              <span>🎯</span> Results
             </h3>
-            
-            <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 space-y-3">
-              <div>
-                <div className="text-xs font-black uppercase mb-3 opacity-80">Explanation</div>
+
+            <div className="space-y-4">
+              {/* Section A: 结果判定 */}
+              <div className="bg-white/15 rounded-2xl p-4 backdrop-blur-sm">
+                <div className="text-xs font-black uppercase mb-2 opacity-80">A. 结果判定</div>
+                <div className="flex items-start gap-3">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl font-black
+                    ${resultMeta.status === 'perfect' ? 'bg-emerald-300 text-emerald-900' 
+                      : resultMeta.status === 'partial' ? 'bg-amber-200 text-amber-800' 
+                      : 'bg-rose-200 text-rose-800'}`}>
+                    {resultMeta.status === 'perfect' ? '✓' : resultMeta.status === 'partial' ? '≈' : '✕'}
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <div className="text-lg font-black">
+                      {resultMeta.status === 'perfect' ? '完全正确' : resultMeta.status === 'partial' ? '部分正确' : '需要改进'}
+                    </div>
+                    <div className="text-sm font-medium opacity-90">
+                      结构 {resultMeta.structureCorrect ? '正确' : '错误'} · 角色准确率 {resultMeta.roleAccuracy}% ({resultMeta.correctCount}/{resultMeta.totalCount})
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section B: 原句标注解析 */}
+              <div className="bg-white/15 rounded-2xl p-4 backdrop-blur-sm space-y-3">
+                <div className="text-xs font-black uppercase opacity-80">B. 原句标注解析</div>
+                <div className={`${isFresh ? 'bg-white text-slate-800' : 'bg-white text-gray-800'} rounded-2xl p-4 border-2 ${isFresh ? 'border-emerald-200' : 'border-purple-200'} leading-relaxed space-x-1 flex flex-wrap`}>
+                  {renderAnnotatedSentence()}
+                </div>
+              </div>
+
+              {/* Section C: Explanation */}
+              <div className="bg-white/15 rounded-2xl p-4 backdrop-blur-sm">
+                <div className="text-xs font-black uppercase mb-3 opacity-80">C. Explanation</div>
                 <div className="space-y-2.5">
                   {currentData.explanation.split('。').filter(s => s.trim()).map((sentence, idx) => {
                     const trimmed = sentence.trim();
                     if (!trimmed) return null;
                     
-                    // 识别关键信息并高亮
                     const isMainStructure = trimmed.includes('主干') || trimmed.includes('主谓') || trimmed.includes('主系表');
                     const isClause = trimmed.includes('从句');
                     const isModifier = trimmed.includes('修饰') || trimmed.includes('定语') || trimmed.includes('状语');
@@ -1209,8 +1439,9 @@ const App: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-white/20 rounded-xl p-3">
-                <div className="text-xs font-black uppercase mb-2 opacity-80">Skeleton</div>
+              {/* Section D: Skeleton */}
+              <div className="bg-white/15 rounded-2xl p-4 backdrop-blur-sm">
+                <div className="text-xs font-black uppercase mb-2 opacity-80">D. Skeleton</div>
                 <div className="flex flex-wrap gap-2">
                   {currentData.skeletonIndices.map(idx => (
                     <span key={idx} className="bg-white/30 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg font-bold">
@@ -1245,7 +1476,10 @@ const App: React.FC = () => {
             </button>
           ) : (
             <button 
-              onClick={() => initGame(currentLevel!)}
+              onClick={() => {
+                scrollToTop();
+                initGame(currentLevel!);
+              }}
               className={`w-full ${isFresh ? 'bg-gradient-to-r from-teal-400 to-emerald-500' : 'bg-gradient-to-r from-green-500 to-emerald-500'} text-white text-lg font-black py-4 rounded-2xl shadow-xl active:scale-95 transition-transform uppercase tracking-wider`}
             >
               Next Challenge →

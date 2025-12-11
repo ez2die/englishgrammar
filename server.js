@@ -390,6 +390,167 @@ app.post('/api/generate', generateLimiter, async (req, res) => {
   }
 });
 
+// POST /api/analyze-sentence - Analyze custom sentence from OCR (添加限流保护)
+app.post('/api/analyze-sentence', generateLimiter, async (req, res) => {
+  try {
+    const { sentence, level } = req.body;
+    
+    if (!sentence || typeof sentence !== 'string' || sentence.trim().length === 0) {
+      return res.status(400).json({ error: 'Sentence is required and must be a non-empty string' });
+    }
+
+    // 检查AI服务是否已初始化
+    if (!sentenceAnalysisService) {
+      return res.status(503).json({
+        error: 'AI服务未初始化',
+        message: 'AI服务初始化失败，请检查配置。',
+      });
+    }
+
+    // 使用默认难度级别（Intermediate）如果未指定
+    const analysisLevel = level || 'Intermediate';
+
+    // 使用SentenceAnalysisService分析自定义句子
+    const startTime = Date.now();
+    const result = await sentenceAnalysisService.analyzeCustomSentence(
+      sentence.trim(),
+      analysisLevel,
+      {
+        preferredProvider: null,
+        enableFallback: true,
+      }
+    );
+    const duration = Date.now() - startTime;
+    console.log(`[API] /api/analyze-sentence completed in ${duration}ms for sentence: "${sentence.substring(0, 50)}..."`);
+
+    res.json(result);
+    
+  } catch (error) {
+    console.error("Failed to analyze sentence:", error);
+    
+    // 处理AllProvidersFailedError
+    if (error.name === 'AllProvidersFailedError') {
+      return res.status(503).json({
+        error: '所有AI提供商都不可用',
+        message: '所有AI服务暂时不可用，请稍后再试。',
+        code: 'ALL_PROVIDERS_FAILED',
+        triedProviders: error.providers,
+      });
+    }
+
+    // 检查是否是配额错误
+    if (error.type === 'QUOTA_EXCEEDED' || error.status === 503 || (error.message && error.message.includes('quota'))) {
+      return res.status(503).json({ 
+        error: 'API 配额已用完',
+        message: '分析服务暂时不可用，请稍后再试。',
+        code: 'QUOTA_EXCEEDED',
+        provider: error.provider,
+      });
+    }
+    
+    // 检查是否是限流错误
+    if (error.type === 'RATE_LIMIT' || error.status === 429) {
+      return res.status(429).json({
+        error: '请求过于频繁',
+        message: '请稍后再试。',
+        provider: error.provider,
+        retryAfter: 60,
+      });
+    }
+    
+    // 检查是否是连接错误
+    if (error.type === 'NETWORK_ERROR' || error.type === 'TIMEOUT' || 
+        (error.message && (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('ECONNREFUSED')))) {
+      return res.status(503).json({ 
+        error: '连接失败',
+        message: '无法连接到分析服务，请检查网络连接或稍后再试。',
+        provider: error.provider,
+      });
+    }
+    
+    res.status(500).json({ 
+      error: '分析失败', 
+      message: '分析句子时出错，请稍后再试。',
+      provider: error.provider || 'unknown',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// POST /api/ocr-normalize - Normalize OCR text to a clean sentence
+app.post('/api/ocr-normalize', generateLimiter, async (req, res) => {
+  try {
+    const { sentence } = req.body;
+
+    if (!sentence || typeof sentence !== 'string' || sentence.trim().length === 0) {
+      return res.status(400).json({ error: 'Sentence is required and must be a non-empty string' });
+    }
+
+    if (!sentenceAnalysisService) {
+      return res.status(503).json({
+        error: 'AI服务未初始化',
+        message: 'AI服务初始化失败，请检查配置。',
+      });
+    }
+
+    const startTime = Date.now();
+    const normalized = await sentenceAnalysisService.normalizeOCRSentence(sentence, {
+      preferredProvider: null,
+      enableFallback: true,
+    });
+    const duration = Date.now() - startTime;
+    console.log(`[API] /api/ocr-normalize completed in ${duration}ms`);
+
+    res.json({ sentence: normalized });
+
+  } catch (error) {
+    console.error("Failed to normalize OCR text:", error);
+
+    if (error.name === 'AllProvidersFailedError') {
+      return res.status(503).json({
+        error: '所有AI提供商都不可用',
+        message: '所有AI服务暂时不可用，请稍后再试。',
+        code: 'ALL_PROVIDERS_FAILED',
+        triedProviders: error.providers,
+      });
+    }
+
+    if (error.type === 'QUOTA_EXCEEDED' || error.status === 503 || (error.message && error.message.includes('quota'))) {
+      return res.status(503).json({ 
+        error: 'API 配额已用完',
+        message: '分析服务暂时不可用，请稍后再试。',
+        code: 'QUOTA_EXCEEDED',
+        provider: error.provider,
+      });
+    }
+    
+    if (error.type === 'RATE_LIMIT' || error.status === 429) {
+      return res.status(429).json({
+        error: '请求过于频繁',
+        message: '请稍后再试。',
+        provider: error.provider,
+        retryAfter: 60,
+      });
+    }
+    
+    if (error.type === 'NETWORK_ERROR' || error.type === 'TIMEOUT' || 
+        (error.message && (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('ECONNREFUSED')))) {
+      return res.status(503).json({ 
+        error: '连接失败',
+        message: '无法连接到分析服务，请检查网络连接或稍后再试。',
+        provider: error.provider,
+      });
+    }
+    
+    res.status(500).json({ 
+      error: '规范化失败', 
+      message: '规范化OCR文本时出错，请稍后再试。',
+      provider: error.provider || 'unknown',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 // Start server
 async function startServer() {
   await ensureQuestionsDir();

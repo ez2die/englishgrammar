@@ -16,6 +16,141 @@ export class SentenceAnalysisService {
   }
 
   /**
+   * 分析自定义句子
+   * @param {string} sentence - 要分析的句子文本
+   * @param {DifficultyLevel} level - 难度级别
+   * @param {object} options - 服务选项
+   * @returns {Promise<SentenceAnalysisData>}
+   */
+  async analyzeCustomSentence(sentence, level, options = {}) {
+    const {
+      preferredProvider = null,
+      enableFallback = true,
+      fallbackProviders = null,
+    } = options;
+
+    if (!sentence || typeof sentence !== 'string' || sentence.trim().length === 0) {
+      throw new Error('Sentence is required and must be a non-empty string');
+    }
+
+    // 构建分析Prompt
+    const prompt = this.promptBuilder.buildAnalysisPrompt(sentence.trim(), level);
+    const schema = this.promptBuilder.getSchema();
+    const systemPrompt = this.promptBuilder.getSystemPrompt();
+
+    // 准备生成选项
+    const generateOptions = {
+      responseFormat: 'json',
+      schema: schema,
+      systemPrompt: systemPrompt,
+      temperature: 0.7,
+      maxTokens: 2000,
+    };
+
+    try {
+      // 调用AI分析
+      const result = await this.aiProviderManager.generateWithFallback(
+        prompt,
+        generateOptions,
+        {
+          preferredProvider,
+          enableFallback,
+          fallbackProviders,
+        }
+      );
+
+      // 解析JSON响应
+      const data = this.parseAIResponse(result.content);
+
+      // 确保 originalSentence 与输入的句子一致
+      data.originalSentence = sentence.trim();
+
+      // 后处理和验证
+      const processedData = this.postProcessData(data, level);
+
+      return processedData;
+
+    } catch (error) {
+      console.error('[SentenceAnalysisService] Custom sentence analysis failed:', error);
+      
+      // 如果所有提供商都失败，抛出错误（不返回fallback，因为这是用户提供的句子）
+      if (error.name === 'AllProvidersFailedError') {
+        throw new Error('所有AI服务暂时不可用，请稍后再试');
+      }
+
+      throw error;
+    }
+  }
+
+  /**
+   * OCR 文本清理（AI规范化）
+   * @param {string} sentence - OCR识别的原始文本
+   * @param {object} options - 服务选项
+   * @returns {Promise<string>} 规范化后的句子
+   */
+  async normalizeOCRSentence(sentence, options = {}) {
+    const {
+      preferredProvider = null,
+      enableFallback = true,
+      fallbackProviders = null,
+    } = options;
+
+    if (!sentence || typeof sentence !== 'string' || sentence.trim().length === 0) {
+      throw new Error('Sentence is required and must be a non-empty string');
+    }
+
+    const prompt = this.promptBuilder.buildOCRNormalizationPrompt(sentence.trim());
+    const systemPrompt = this.promptBuilder.getSystemPrompt();
+
+    const generateOptions = {
+      responseFormat: 'text',
+      systemPrompt,
+      temperature: 0.3,
+      maxTokens: 200,
+    };
+
+    try {
+      const result = await this.aiProviderManager.generateWithFallback(
+        prompt,
+        generateOptions,
+        {
+          preferredProvider,
+          enableFallback,
+          fallbackProviders,
+        }
+      );
+
+      const cleaned = this.parseNormalizedSentence(result.content);
+      if (!cleaned) {
+        throw new Error('Failed to normalize OCR text');
+      }
+      return cleaned;
+    } catch (error) {
+      console.error('[SentenceAnalysisService] OCR normalization failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 解析AI返回的规范化句子
+   * @param {string} content
+   * @returns {string} cleaned sentence
+   */
+  parseNormalizedSentence(content) {
+    if (!content || typeof content !== 'string') return '';
+    let text = content.trim();
+    // 移除markdown代码块
+    text = text.replace(/^```(?:\w+)?\s*/i, '').replace(/```$/i, '').trim();
+    // 将多行合并为一行
+    text = text.replace(/\s+/g, ' ').trim();
+    // 确保以句号或合适标点结束
+    if (text && !/[.?!]$/.test(text)) {
+      text = `${text}.`;
+    }
+    return text;
+  }
+
+  /**
    * 生成句子分析
    * @param {DifficultyLevel} level - 难度级别
    * @param {object} options - 服务选项

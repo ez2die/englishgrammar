@@ -146,11 +146,59 @@ export class PromptBuilder {
   }
 
   /**
+   * 构建用于分析自定义句子的Prompt
+   * @param {string} sentence - 要分析的句子
+   * @param {DifficultyLevel} level - 难度级别
+   * @returns {string} 完整的Prompt字符串
+   */
+  buildAnalysisPrompt(sentence, level) {
+    const analysisRules = this.getAnalysisRules();
+    
+    const prompt = `Analyze the following English sentence structure focusing on "Skeleton vs. Modifiers vs. Clauses":
+    
+    Sentence: "${sentence}"
+    
+    ${analysisRules}
+    
+    Return the result in JSON format with these exact field names:
+    - "originalSentence": The complete English sentence (use the exact sentence provided)
+    - "words": Array of words/punctuation tokens
+    - "wordRoles": Array of grammatical roles (matching words array)
+    - "structureType": One of [主谓 (SV), 主谓宾 (SVO), 主系表 (SP), 主谓双宾 (SVOO), 主谓宾宾补 (SVOC)]
+    - "skeletonIndices": Array of indices for skeleton words
+    - "explanation": Brief explanation in Chinese
+    - "options": Array of role strings for UI buttons
+    
+    CRITICAL: Use "originalSentence" (not "sentence") and "structureType" (not "mainClauseStructure").
+    IMPORTANT: The "originalSentence" must be exactly the same as the sentence provided above.`;
+
+    return prompt;
+  }
+
+  /**
    * 获取系统提示词
    * @returns {string}
    */
   getSystemPrompt() {
     return `You are an expert English grammar teacher helping students understand sentence structure. 
 Your task is to generate English sentences and analyze their grammatical structure, focusing on identifying the skeleton (main structure) versus modifiers and clauses.`;
+  }
+
+  /**
+   * 构建用于OCR文本清理的Prompt
+   * @param {string} sentence - OCR原始文本
+   * @returns {string} Prompt字符串
+   */
+  buildOCRNormalizationPrompt(sentence) {
+    return `You are given text extracted from an OCR process. The text may contain OCR errors, extra spaces, or broken punctuation.
+
+Original OCR text:
+"${sentence}"
+
+Your task:
+1. Fix obvious OCR errors (like misread characters).
+2. Remove duplicated spaces or line breaks.
+3. Ensure it forms ONE reasonable, grammatically correct English sentence.
+4. Do NOT add explanations. Do NOT wrap in quotes. Return ONLY the cleaned sentence.`;
   }
 }

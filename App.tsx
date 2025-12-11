@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { generateSentenceAnalysis } from './services/geminiService';
+import { generateSentenceAnalysis, analyzeSentence } from './services/geminiService';
 import { storageService } from './services/storageService';
 import { SentenceAnalysisData, GrammarRole, SentenceStructure, DifficultyLevel, Theme } from './types';
 import { GRAMMAR_ROLES, SENTENCE_STRUCTURES, SKELETON_CONFIG } from './constants';
 import WordPill from './components/WordPill';
+import ImageUploader from './components/ImageUploader';
 import { useTheme } from './contexts/ThemeContext';
 import ThemeSwitcher from './components/ThemeSwitcher';
 
@@ -472,15 +473,16 @@ const App: React.FC = () => {
     });
     
     const structureCorrect = selectedStructure === currentData.structureType;
+    const allWordsCorrect = totalCount > 0 && correctCount === totalCount;
+    const fullyCorrect = allWordsCorrect && structureCorrect;
+
+    // 只有在全部正确（角色+结构）时才积分；否则 0 分
     const accuracy = totalCount > 0 ? (correctCount / totalCount) * 100 : 0;
-    const newScore = Math.round(accuracy + (structureCorrect ? 20 : 0));
+    const rawScore = Math.round(accuracy + (structureCorrect ? 20 : 0));
+    const newScore = fullyCorrect ? rawScore : 0;
     
     setScore(prev => prev + newScore);
-    if (newScore >= 80) {
-      setStreak(prev => prev + 1);
-    } else {
-      setStreak(0);
-    }
+    setStreak(prev => (fullyCorrect ? prev + 1 : 0));
     
     setTimeout(() => {
       window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
@@ -610,6 +612,56 @@ const App: React.FC = () => {
              {errorMsg}
            </div>
          )}
+
+         {/* OCR Image Uploader */}
+         <div className="max-w-md mx-auto mb-6">
+           <ImageUploader
+             onTextRecognized={async (text: string) => {
+               setLoading(true);
+               setErrorMsg(null);
+               setSubmitted(false);
+               setShowResult(false);
+               setData(null);
+               setCurrentLevel(DifficultyLevel.INTERMEDIATE); // 默认使用Intermediate级别
+               
+               // Reset game state
+               setAssignedRoles({});
+               setSelectedStructure(null);
+               setSkeletonSlots({});
+               setSortingSelection([]);
+               setSkeletonSelection([]);
+               
+               try {
+                 const analysisData = await analyzeSentence(text, DifficultyLevel.INTERMEDIATE);
+                 setData(analysisData);
+                 setSourceInfo('OCR Analysis');
+                 setLoading(false);
+               } catch (err: any) {
+                 console.error('Failed to analyze OCR text:', err);
+                 let errorMessage = '分析失败，请稍后再试';
+                 
+                 if (err.status === 503 || err.isQuotaExceeded || err.code === 'GEMINI_QUOTA_EXCEEDED' || 
+                     (err.message && (err.message.includes('配额') || err.message.includes('quota')))) {
+                   errorMessage = '分析服务暂时不可用，请稍后再试';
+                 } else if (err.status === 429 || err.isRateLimit || 
+                            (err.message && (err.message.includes('频繁') || err.message.includes('Too many')))) {
+                   errorMessage = '请求过于频繁，请稍后再试';
+                 } else if (err.isNetworkError || 
+                            (err.message && (err.message.includes('网络') || err.message.includes('connection') || err.message.includes('fetch')))) {
+                   errorMessage = '网络连接失败，请检查您的网络连接';
+                 } else if (err.message) {
+                   errorMessage = err.message;
+                 }
+                 
+                 setErrorMsg(errorMessage);
+                 setLoading(false);
+               }
+             }}
+             onError={(error: string) => {
+               setErrorMsg(error);
+             }}
+           />
+         </div>
 
          {/* Level Cards */}
          <div className="max-w-md mx-auto space-y-4">

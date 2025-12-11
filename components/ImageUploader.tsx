@@ -611,45 +611,49 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onTextRecognized, onError
         0, 0, cropWidth, cropHeight
       );
 
-      // 转换为blob
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          throw new Error('图片裁剪失败');
-        }
+      // 转换为blob（使用Promise包装，确保错误可捕获）
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((b) => {
+          if (!b) {
+            reject(new Error('图片裁剪失败'));
+          } else {
+            resolve(b);
+          }
+        }, 'image/jpeg', 0.95);
+      });
 
-        // 创建File对象
-        const file = new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' });
+      // 创建File对象
+      const file = new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' });
 
-        // 开始OCR识别
-        const text = await recognizeText(file, (progress) => {
-          setProgress(progress);
-        });
+      // 开始OCR识别
+      const text = await recognizeText(file, (progress) => {
+        setProgress(progress);
+      });
 
-        // 验证识别结果
-        if (!validateRecognizedText(text)) {
-          throw new Error('未能识别到文本，请确保图片清晰且包含英文文本');
-        }
+      // 验证识别结果
+      if (!validateRecognizedText(text)) {
+        throw new Error('未能识别到文本，请确保图片清晰且包含英文文本');
+      }
 
-        setRecognizedText(text);
-        setNormalizedText('');
-        setEditedText(text);
-        setProgress(null);
+      setRecognizedText(text);
+      setNormalizedText('');
+      setEditedText(text);
+      setProgress(null);
 
-        // 进行AI规范化
-        try {
-          setNormalizing(true);
-          const normalized = await normalizeOCRText(text);
-          setNormalizedText(normalized);
-          setEditedText(normalized);
-        } catch (normalizeErr: any) {
-          console.warn('OCR normalization failed:', normalizeErr);
-          // 保留原始文本，不阻断流程
-        } finally {
-          setNormalizing(false);
-        }
+      // 进行AI规范化
+      try {
+        setNormalizing(true);
+        const normalized = await normalizeOCRText(text);
+        setNormalizedText(normalized);
+        setEditedText(normalized);
+      } catch (normalizeErr: any) {
+        console.warn('OCR normalization failed:', normalizeErr);
+        // 保留原始文本，不阻断流程
+      } finally {
+        setNormalizing(false);
+      }
 
-        setState('success');
-      }, 'image/jpeg', 0.95);
+      setState('success');
     } catch (err: any) {
       const errorMsg = err.message || '图片识别失败，请确保图片清晰且包含英文文本';
       setError(errorMsg);

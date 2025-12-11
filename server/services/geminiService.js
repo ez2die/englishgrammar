@@ -20,7 +20,13 @@ export const generateSentenceAnalysis = async (level) => {
       - It MUST be a simple sentence with ONE main clause.
       - NO subordinate clauses (no 'which', 'that', 'because', etc.).
       - NO complex modifiers. Keep adjectives and adverbs simple.
-      - Focus on clear S-V, S-V-O, S-V-P structures.
+      - FIRST pick one main structure with the following weights (choose exactly one):
+        * SV: 25%
+        * SVO: 35%
+        * SP (linking verb + predicative): 15%
+        * SVOO: 15%
+        * SVOC: 10%
+      - Shape the sentence to that structure. DO NOT always default to SVO.
       - **IMPORTANT**: Use DIVERSE topics and themes. Avoid overusing common examples like "dog chases cat" or "fox jumps over dog".
       - Vary topics across: daily activities, nature, school, hobbies, food, travel, technology, sports, art, etc.
       - Examples of good variety:
@@ -36,6 +42,13 @@ export const generateSentenceAnalysis = async (level) => {
       - It MUST contain RICH MODIFIERS (Adjectives, Adverbs, Prepositional Phrases).
       - NO subordinate clauses (avoid 'which', 'who', 'although' clauses).
       - The challenge should be distinguishing modifiers (Attributes/Adverbials) from the skeleton.
+      - FIRST pick one main structure with the following weights (choose exactly one):
+        * SV: 10%
+        * SVO: 30%
+        * SP: 15%
+        * SVOO: 20%
+        * SVOC: 25%
+      - Shape the sentence to that structure. DO NOT mostly output SVO.
       - **IMPORTANT**: Use DIVERSE topics and themes. Avoid repetitive examples.
       - Vary topics across: daily activities, nature, school, hobbies, food, travel, technology, sports, art, etc.
       - Example: "The very old man in the park walked slowly towards the bench."
@@ -50,6 +63,12 @@ export const generateSentenceAnalysis = async (level) => {
       Generate a COMPLEX English sentence suitable for Grade 9.
       - The sentence MUST contain at least one SUBORDINATE CLAUSE (e.g., Attributive/Relative Clause or Adverbial Clause).
       - It should challenge the student to identify the main skeleton amidst the clauses.
+      - FIRST pick one main structure for the MAIN clause with the following weights:
+        * SVO: 35%
+        * SVOC: 30%
+        * SP: 20%
+        * SVOO: 15%
+      - Keep variety; do NOT make every sentence SVO + clause. Use SVOC/SVOO/SP frequently.
       - **IMPORTANT**: Use DIVERSE topics and themes. Avoid repetitive examples.
       - Vary topics across: academic subjects, history, science, literature, current events, professional contexts, etc.
       - Examples:

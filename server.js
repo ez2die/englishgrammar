@@ -17,6 +17,11 @@ import rateLimit from 'express-rate-limit';
 import { initAIService } from './server/services/ai/init.js';
 import { SentenceAnalysisService } from './server/services/application/SentenceAnalysisService.js';
 
+// Database and Routes
+import { initDB } from './server/db/database.js';
+import authRoutes from './server/routes/auth.js';
+import userRoutes from './server/routes/user.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -52,7 +57,7 @@ app.set('trust proxy', 1);
 const generateLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 分钟
   max: 30, // 每个 IP 最多 30 次请求（5分钟内）
-  message: { 
+  message: {
     error: '请求过于频繁，请稍后再试。',
     retryAfter: 300 // 建议等待时间（秒）
   },
@@ -122,16 +127,16 @@ async function writeQuestions(questions) {
       },
       lockfilePath: QUESTIONS_FILE + '.lock'
     });
-    
+
     // 重新读取最新数据（防止在等待锁期间数据已更新）
     const currentQuestions = await readQuestions();
-    
+
     // 合并数据（去重）
     const questionMap = new Map();
     currentQuestions.forEach(q => {
       questionMap.set(q.originalSentence, q);
     });
-    
+
     // 添加新问题
     if (Array.isArray(questions)) {
       questions.forEach(q => {
@@ -145,9 +150,9 @@ async function writeQuestions(questions) {
         questionMap.set(questions.originalSentence, questions);
       }
     }
-    
+
     const updatedQuestions = Array.from(questionMap.values());
-    
+
     // 原子写入：先写入临时文件，然后原子性地重命名（避免写入过程中文件损坏）
     const tempFile = QUESTIONS_FILE + '.' + Date.now() + '.tmp';
     try {
@@ -156,11 +161,11 @@ async function writeQuestions(questions) {
     } catch (writeError) {
       // 如果写入失败，清理临时文件
       try {
-        await fs.unlink(tempFile).catch(() => {});
-      } catch {}
+        await fs.unlink(tempFile).catch(() => { });
+      } catch { }
       throw writeError;
     }
-    
+
     return true;
   } catch (error) {
     console.error('Failed to write questions:', error);
@@ -177,6 +182,8 @@ async function writeQuestions(questions) {
 }
 
 // API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/user', userRoutes);
 
 // GET /api/questions - Get all questions
 app.get('/api/questions', async (req, res) => {
@@ -193,7 +200,7 @@ app.post('/api/questions', async (req, res) => {
   let release;
   try {
     const newQuestion = req.body;
-    
+
     // 获取文件锁
     release = await lockfile.lock(QUESTIONS_FILE, {
       retries: {
@@ -203,19 +210,19 @@ app.post('/api/questions', async (req, res) => {
       },
       lockfilePath: QUESTIONS_FILE + '.lock'
     });
-    
+
     // 读取最新数据（在锁保护下读取，确保数据是最新的）
     const questions = await readQuestions();
-    
+
     // 检查是否已存在
     const exists = questions.some(q => q.originalSentence === newQuestion.originalSentence);
     if (exists) {
       return res.json({ message: 'Question already exists', count: questions.length });
     }
-    
+
     // 添加新问题
     questions.push(newQuestion);
-    
+
     // 原子写入：先写入临时文件，然后原子性地重命名
     const tempFile = QUESTIONS_FILE + '.' + Date.now() + '.tmp';
     try {
@@ -224,11 +231,11 @@ app.post('/api/questions', async (req, res) => {
     } catch (writeError) {
       // 如果写入失败，清理临时文件
       try {
-        await fs.unlink(tempFile).catch(() => {});
-      } catch {}
+        await fs.unlink(tempFile).catch(() => { });
+      } catch { }
       throw writeError;
     }
-    
+
     res.json({ message: 'Question saved', count: questions.length });
   } catch (error) {
     console.error('Failed to save question:', error);
@@ -249,13 +256,13 @@ app.get('/api/questions/random', async (req, res) => {
   try {
     const { level, excludeSentence } = req.query;
     const questions = await readQuestions();
-    
+
     if (questions.length === 0) {
       return res.json(null);
     }
-    
+
     let candidates = questions;
-    
+
     // Filter by level if provided
     if (level) {
       candidates = questions.filter(q => {
@@ -263,7 +270,7 @@ app.get('/api/questions/random', async (req, res) => {
         return qLevel === level;
       });
     }
-    
+
     // Exclude specific sentence if provided
     if (excludeSentence) {
       const filtered = candidates.filter(q => q.originalSentence !== excludeSentence);
@@ -273,11 +280,11 @@ app.get('/api/questions/random', async (req, res) => {
         return res.json(null);
       }
     }
-    
+
     if (candidates.length === 0) {
       return res.json(null);
     }
-    
+
     const randomIndex = Math.floor(Math.random() * candidates.length);
     res.json(candidates[randomIndex]);
   } catch (error) {
@@ -290,16 +297,16 @@ app.get('/api/questions/size', async (req, res) => {
   try {
     const { level } = req.query;
     const questions = await readQuestions();
-    
+
     if (!level) {
       return res.json({ size: questions.length });
     }
-    
+
     const filtered = questions.filter(q => {
       const qLevel = q.level || 'Advanced';
       return qLevel === level;
     });
-    
+
     res.json({ size: filtered.length });
   } catch (error) {
     res.status(500).json({ error: 'Failed to get bank size' });
@@ -310,7 +317,7 @@ app.get('/api/questions/size', async (req, res) => {
 app.post('/api/generate', generateLimiter, async (req, res) => {
   try {
     const { level, preferredProvider } = req.body;
-    
+
     if (!level) {
       return res.status(400).json({ error: 'Level is required' });
     }
@@ -334,10 +341,10 @@ app.post('/api/generate', generateLimiter, async (req, res) => {
     console.log(`[API] /api/generate completed in ${duration}ms for level: ${level}`);
 
     res.json(result);
-    
+
   } catch (error) {
     console.error("Failed to generate sentence analysis:", error);
-    
+
     // 处理AllProvidersFailedError
     if (error.name === 'AllProvidersFailedError') {
       return res.status(503).json({
@@ -351,7 +358,7 @@ app.post('/api/generate', generateLimiter, async (req, res) => {
 
     // 检查是否是配额错误
     if (error.type === 'QUOTA_EXCEEDED' || error.status === 503 || (error.message && error.message.includes('quota'))) {
-      return res.status(503).json({ 
+      return res.status(503).json({
         error: 'API 配额已用完',
         message: '生成服务暂时不可用，建议使用已保存的问题。',
         code: 'QUOTA_EXCEEDED',
@@ -359,7 +366,7 @@ app.post('/api/generate', generateLimiter, async (req, res) => {
         fallback: '请从问题库中选择问题'
       });
     }
-    
+
     // 检查是否是限流错误
     if (error.type === 'RATE_LIMIT' || error.status === 429) {
       return res.status(429).json({
@@ -369,20 +376,20 @@ app.post('/api/generate', generateLimiter, async (req, res) => {
         retryAfter: 60,
       });
     }
-    
+
     // 检查是否是连接错误
-    if (error.type === 'NETWORK_ERROR' || error.type === 'TIMEOUT' || 
-        (error.message && (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('ECONNREFUSED')))) {
-      return res.status(503).json({ 
+    if (error.type === 'NETWORK_ERROR' || error.type === 'TIMEOUT' ||
+      (error.message && (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('ECONNREFUSED')))) {
+      return res.status(503).json({
         error: '连接失败',
         message: '无法连接到生成服务，请检查网络连接或稍后再试。',
         provider: error.provider,
         fallback: '您可以尝试从问题库中选择已有问题。'
       });
     }
-    
-    res.status(500).json({ 
-      error: '生成失败', 
+
+    res.status(500).json({
+      error: '生成失败',
       message: '生成句子分析时出错，请稍后再试。',
       provider: error.provider || 'unknown',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
@@ -394,7 +401,7 @@ app.post('/api/generate', generateLimiter, async (req, res) => {
 app.post('/api/analyze-sentence', generateLimiter, async (req, res) => {
   try {
     const { sentence, level } = req.body;
-    
+
     if (!sentence || typeof sentence !== 'string' || sentence.trim().length === 0) {
       return res.status(400).json({ error: 'Sentence is required and must be a non-empty string' });
     }
@@ -424,10 +431,10 @@ app.post('/api/analyze-sentence', generateLimiter, async (req, res) => {
     console.log(`[API] /api/analyze-sentence completed in ${duration}ms for sentence: "${sentence.substring(0, 50)}..."`);
 
     res.json(result);
-    
+
   } catch (error) {
     console.error("Failed to analyze sentence:", error);
-    
+
     // 处理AllProvidersFailedError
     if (error.name === 'AllProvidersFailedError') {
       return res.status(503).json({
@@ -440,14 +447,14 @@ app.post('/api/analyze-sentence', generateLimiter, async (req, res) => {
 
     // 检查是否是配额错误
     if (error.type === 'QUOTA_EXCEEDED' || error.status === 503 || (error.message && error.message.includes('quota'))) {
-      return res.status(503).json({ 
+      return res.status(503).json({
         error: 'API 配额已用完',
         message: '分析服务暂时不可用，请稍后再试。',
         code: 'QUOTA_EXCEEDED',
         provider: error.provider,
       });
     }
-    
+
     // 检查是否是限流错误
     if (error.type === 'RATE_LIMIT' || error.status === 429) {
       return res.status(429).json({
@@ -457,19 +464,19 @@ app.post('/api/analyze-sentence', generateLimiter, async (req, res) => {
         retryAfter: 60,
       });
     }
-    
+
     // 检查是否是连接错误
-    if (error.type === 'NETWORK_ERROR' || error.type === 'TIMEOUT' || 
-        (error.message && (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('ECONNREFUSED')))) {
-      return res.status(503).json({ 
+    if (error.type === 'NETWORK_ERROR' || error.type === 'TIMEOUT' ||
+      (error.message && (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('ECONNREFUSED')))) {
+      return res.status(503).json({
         error: '连接失败',
         message: '无法连接到分析服务，请检查网络连接或稍后再试。',
         provider: error.provider,
       });
     }
-    
-    res.status(500).json({ 
-      error: '分析失败', 
+
+    res.status(500).json({
+      error: '分析失败',
       message: '分析句子时出错，请稍后再试。',
       provider: error.provider || 'unknown',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
@@ -516,14 +523,14 @@ app.post('/api/ocr-normalize', generateLimiter, async (req, res) => {
     }
 
     if (error.type === 'QUOTA_EXCEEDED' || error.status === 503 || (error.message && error.message.includes('quota'))) {
-      return res.status(503).json({ 
+      return res.status(503).json({
         error: 'API 配额已用完',
         message: '分析服务暂时不可用，请稍后再试。',
         code: 'QUOTA_EXCEEDED',
         provider: error.provider,
       });
     }
-    
+
     if (error.type === 'RATE_LIMIT' || error.status === 429) {
       return res.status(429).json({
         error: '请求过于频繁',
@@ -532,18 +539,18 @@ app.post('/api/ocr-normalize', generateLimiter, async (req, res) => {
         retryAfter: 60,
       });
     }
-    
-    if (error.type === 'NETWORK_ERROR' || error.type === 'TIMEOUT' || 
-        (error.message && (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('ECONNREFUSED')))) {
-      return res.status(503).json({ 
+
+    if (error.type === 'NETWORK_ERROR' || error.type === 'TIMEOUT' ||
+      (error.message && (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('ECONNREFUSED')))) {
+      return res.status(503).json({
         error: '连接失败',
         message: '无法连接到分析服务，请检查网络连接或稍后再试。',
         provider: error.provider,
       });
     }
-    
-    res.status(500).json({ 
-      error: '规范化失败', 
+
+    res.status(500).json({
+      error: '规范化失败',
       message: '规范化OCR文本时出错，请稍后再试。',
       provider: error.provider || 'unknown',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
@@ -553,15 +560,16 @@ app.post('/api/ocr-normalize', generateLimiter, async (req, res) => {
 
 // Start server
 async function startServer() {
+  initDB(); // Initialize SQLite database
   await ensureQuestionsDir();
-  
+
   // Serve static files in production
   if (isProduction) {
     // Check if dist directory exists
     try {
       await fs.access(DIST_DIR);
       app.use(express.static(DIST_DIR));
-      
+
       // Handle React Router - serve index.html for all non-API routes
       app.get('*', (req, res) => {
         if (!req.path.startsWith('/api')) {
@@ -573,7 +581,7 @@ async function startServer() {
       console.warn(`⚠️  Dist directory not found. Run 'npm run build' first.`);
     }
   }
-  
+
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`📚 Question Bank API server running on http://0.0.0.0:${PORT}`);
     console.log(`📁 Questions stored in: ${QUESTIONS_DIR}`);

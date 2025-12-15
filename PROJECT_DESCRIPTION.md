@@ -1,0 +1,4 @@
+# Grammar Master - English Sentence Analysis
+
+**Grammar Master** is an interactive web application that helps learners master English sentence structure through AI-powered analysis and gamified practice. The app uses multiple AI providers (Gemini, OpenAI, DeepSeek, Qwen) to generate and analyze English sentences with detailed grammatical breakdowns. Users practice at three difficulty levels by identifying sentence structures, classifying words into grammatical roles, and building sentence skeletons. It features OCR functionality to analyze text from images, a question bank system for storing exercises, and a modern React-based interface. Built with React, TypeScript, Node.js, and Express, the application provides real-time feedback, progress tracking, and intelligent fallback mechanisms for reliable service availability.
+

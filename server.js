@@ -47,22 +47,27 @@ try {
   // 继续启动服务器，但AI功能可能不可用
 }
 
-// CORS: same-origin & non-browser requests always allowed; in production only
-// origins on the allowlist may call cross-origin; permissive in dev.
-const corsOptions = {
-  origin(origin, cb) {
-    if (!origin) return cb(null, true);
-    if (!isProduction) return cb(null, true);
-    if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
-    return cb(new Error('Not allowed by CORS'));
-  },
+// CORS: allow non-browser requests, same-origin (the SPA calling its own API,
+// incl. behind a proxy/tunnel), and any allowlisted origin. A disallowed origin
+// is simply not granted CORS headers (browser blocks it) — never a 500.
+const corsDelegate = (req, callback) => {
+  const origin = req.headers.origin;
+  if (!origin) return callback(null, { origin: true });
+  if (!isProduction) return callback(null, { origin: true });
+  if (ALLOWED_ORIGINS.includes(origin)) return callback(null, { origin: true });
+  try {
+    const originHost = new URL(origin).host;
+    const reqHost = req.headers['x-forwarded-host'] || req.headers.host;
+    if (originHost === reqHost) return callback(null, { origin: true });
+  } catch { /* malformed Origin */ }
+  return callback(null, { origin: false });
 };
 
 // Middleware
 // CSP is disabled for now because index.html still loads Tailwind + an importmap
 // from CDNs; re-enable it once those assets are self-hosted.
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors(corsOptions));
+app.use(cors(corsDelegate));
 app.use(express.json({ limit: '1mb' }));
 
 // Only trust the proxy when actually behind one (otherwise a direct client can

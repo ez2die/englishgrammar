@@ -36,16 +36,8 @@ echo "✅ npm 版本: $(npm -v)"
 
 cd "$PROJECT_DIR"
 
-echo "📦 安装依赖..."
-npm install --production=false
-
-# 验证关键依赖（并发修复必需）
-echo "🔍 验证关键依赖..."
-if ! npm list proper-lockfile express-rate-limit &> /dev/null; then
-    echo "⚠️  警告: 关键依赖可能未正确安装"
-    echo "   正在重新安装..."
-    npm install proper-lockfile express-rate-limit
-fi
+echo "📦 安装依赖 (npm ci, 可复现)..."
+npm ci
 
 # 确保 node_modules/.bin 中的可执行文件有执行权限
 echo "🔧 设置执行权限..."
@@ -61,20 +53,22 @@ if [ ! -d "dist" ] || [ ! -f "dist/index.html" ]; then
 fi
 echo "✅ 前端构建成功"
 
-# 检查 .env 文件
-if [ ! -f .env ]; then
-    echo "⚠️  警告: 未找到 .env 文件"
-    echo "📝 正在从 .env.example 创建 .env 文件..."
-    if [ -f .env.example ]; then
-        cp .env.example .env
-        echo "✅ 已创建 .env 文件，请编辑并设置 GEMINI_API_KEY"
-    else
-        echo "GEMINI_API_KEY=your_api_key_here" > .env
-        echo "NODE_ENV=production" >> .env
-        echo "PORT=3001" >> .env
-        echo "✅ 已创建 .env 文件，请编辑并设置 GEMINI_API_KEY"
-    fi
+# 校验环境变量文件（绝不自动伪造缺少密钥的 .env）
+ENV_FILE=""
+if [ -f .env.local ]; then ENV_FILE=".env.local"; elif [ -f .env ]; then ENV_FILE=".env"; fi
+if [ -z "$ENV_FILE" ]; then
+    echo "❌ 未找到 .env.local 或 .env。请基于 .env.example 创建并填写 JWT_SECRET 及至少一个 AI Key。"
+    exit 1
 fi
+if ! grep -qE '^JWT_SECRET=.{32,}' "$ENV_FILE"; then
+    echo "❌ $ENV_FILE 缺少足够强度的 JWT_SECRET（>=32 位）。生成: openssl rand -hex 32"
+    exit 1
+fi
+if ! grep -qE '^(QWEN|GEMINI|OPENAI|DEEPSEEK|CLAUDE)_API_KEY=.+' "$ENV_FILE"; then
+    echo "❌ $ENV_FILE 未配置任何 AI Key（QWEN/GEMINI/OPENAI/DEEPSEEK/CLAUDE 之一）。"
+    exit 1
+fi
+echo "✅ 环境变量校验通过 ($ENV_FILE)"
 
 # 创建必要的目录
 mkdir -p logs questions
@@ -133,7 +127,6 @@ echo ""
 echo "🧪 部署后验证:"
 echo "   1. 检查应用状态: pm2 status"
 echo "   2. 测试 API: curl http://localhost:3001/api/questions/size"
-echo "   3. 运行并发测试: ./test_concurrency.sh http://localhost:3001 10"
 echo ""
 echo "📚 更多信息请查看 PRODUCTION_DEPLOYMENT.md"
 

@@ -140,16 +140,21 @@ export class BaseAIProvider {
     if (error.status === 429) {
       return AIErrorType.RATE_LIMIT;
     }
-    if (error.status === 503 || error.message?.includes('quota')) {
+    // Quota exhaustion is signaled by an explicit message/code, NOT by 503.
+    if (error.message?.includes('quota') || error.message?.includes('insufficient_quota')) {
       return AIErrorType.QUOTA_EXCEEDED;
     }
     if (error.status === 401 || error.status === 403) {
       return AIErrorType.AUTH_ERROR;
     }
-    if (error.message?.includes('timeout') || error.name === 'TimeoutError') {
+    // 503 is a generic upstream outage — transient and retryable.
+    if (error.status === 503 || (error.status >= 500 && error.status <= 599)) {
+      return AIErrorType.NETWORK_ERROR;
+    }
+    if (error.message?.includes('timeout') || error.name === 'TimeoutError' || error.code === 'ETIMEDOUT') {
       return AIErrorType.TIMEOUT;
     }
-    if (error.message?.includes('network') || error.message?.includes('fetch')) {
+    if (error.message?.includes('network') || error.message?.includes('fetch') || error.code === 'ECONNREFUSED') {
       return AIErrorType.NETWORK_ERROR;
     }
     return AIErrorType.UNKNOWN_ERROR;

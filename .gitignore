@@ -32,3 +32,6 @@ logs/
 
 # SQLite database
 database.sqlite
+
+# Local-only agent notes (server-specific)
+CLAUDE.md

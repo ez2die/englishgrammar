@@ -1,24 +1,25 @@
-import { config } from 'dotenv';
-// 加载.env.local文件（优先于.env）
-config({ path: '.env.local' });
-// 如果.env.local不存在，回退到.env
-config();
+// Load environment FIRST so every module below sees a populated process.env
+// (ESM evaluates sibling imports in source order, before this module's body).
+import './server/loadEnv.js';
+
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import crypto from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import lockfile from 'proper-lockfile';
 import rateLimit from 'express-rate-limit';
-// 旧版导入（保留用于向后兼容）
-// import { generateSentenceAnalysis } from './server/services/geminiService.js';
 
-// 新版多AI支持
+// Multi-AI support
 import { initAIService } from './server/services/ai/init.js';
 import { SentenceAnalysisService } from './server/services/application/SentenceAnalysisService.js';
 
-// Database and Routes
+// Database, config, middleware, routes
 import { initDB } from './server/db/database.js';
+import { ALLOWED_ORIGINS, TRUST_PROXY } from './server/config/env.js';
+import { authenticateToken } from './server/middleware/auth.js';
 import authRoutes from './server/routes/auth.js';
 import userRoutes from './server/routes/user.js';
 
@@ -31,6 +32,7 @@ const QUESTIONS_DIR = path.join(__dirname, 'questions');
 const QUESTIONS_FILE = path.join(QUESTIONS_DIR, 'bank.json');
 const DIST_DIR = path.join(__dirname, 'dist');
 const isProduction = process.env.NODE_ENV === 'production';
+const MAX_BANK_SIZE = 20000; // safety cap on the file-based question store
 
 // 初始化AI服务
 let aiProviderManager = null;
@@ -45,28 +47,40 @@ try {
   // 继续启动服务器，但AI功能可能不可用
 }
 
+// CORS: same-origin & non-browser requests always allowed; in production only
+// origins on the allowlist may call cross-origin; permissive in dev.
+const corsOptions = {
+  origin(origin, cb) {
+    if (!origin) return cb(null, true);
+    if (!isProduction) return cb(null, true);
+    if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    return cb(new Error('Not allowed by CORS'));
+  },
+};
+
 // Middleware
-app.use(cors());
-app.use(express.json());
+// CSP is disabled for now because index.html still loads Tailwind + an importmap
+// from CDNs; re-enable it once those assets are self-hosted.
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '1mb' }));
 
-// 信任代理（如果使用 Nginx 反向代理）
-app.set('trust proxy', 1);
+// Only trust the proxy when actually behind one (otherwise a direct client can
+// spoof X-Forwarded-For and defeat per-IP rate limiting).
+if (TRUST_PROXY) {
+  app.set('trust proxy', 1);
+}
 
-// API 限流中间件 - 限制 Gemini API 调用频率
-// 调整为更宽松的限制：每5分钟30次请求，更适合正常使用
+// Rate limiter for the (billable) AI endpoints.
 const generateLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 分钟
   max: 30, // 每个 IP 最多 30 次请求（5分钟内）
   message: {
     error: '请求过于频繁，请稍后再试。',
-    retryAfter: 300 // 建议等待时间（秒）
+    retryAfter: 300
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => {
-    // 如果有有效的 session token，可以考虑放宽限制
-    return false;
-  },
   handler: (req, res) => {
     res.status(429).json({
       error: '请求过于频繁，请稍后再试。',
@@ -74,6 +88,15 @@ const generateLimiter = rateLimit({
       retryAfter: 300
     });
   }
+});
+
+// Stricter limiter for auth endpoints (brute-force / enumeration protection).
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { error: '尝试过于频繁，请稍后再试。' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 // Ensure questions directory exists
@@ -114,75 +137,19 @@ async function readQuestions() {
   }
 }
 
-// Write questions to file (使用文件锁确保并发安全)
-async function writeQuestions(questions) {
-  let release;
-  try {
-    // 获取文件锁，最多等待 10 秒
-    release = await lockfile.lock(QUESTIONS_FILE, {
-      retries: {
-        retries: 20,
-        minTimeout: 100,
-        maxTimeout: 500
-      },
-      lockfilePath: QUESTIONS_FILE + '.lock'
-    });
-
-    // 重新读取最新数据（防止在等待锁期间数据已更新）
-    const currentQuestions = await readQuestions();
-
-    // 合并数据（去重）
-    const questionMap = new Map();
-    currentQuestions.forEach(q => {
-      questionMap.set(q.originalSentence, q);
-    });
-
-    // 添加新问题
-    if (Array.isArray(questions)) {
-      questions.forEach(q => {
-        if (!questionMap.has(q.originalSentence)) {
-          questionMap.set(q.originalSentence, q);
-        }
-      });
-    } else {
-      // 单个问题
-      if (!questionMap.has(questions.originalSentence)) {
-        questionMap.set(questions.originalSentence, questions);
-      }
-    }
-
-    const updatedQuestions = Array.from(questionMap.values());
-
-    // 原子写入：先写入临时文件，然后原子性地重命名（避免写入过程中文件损坏）
-    const tempFile = QUESTIONS_FILE + '.' + Date.now() + '.tmp';
-    try {
-      await fs.writeFile(tempFile, JSON.stringify(updatedQuestions, null, 2), 'utf-8');
-      await fs.rename(tempFile, QUESTIONS_FILE);
-    } catch (writeError) {
-      // 如果写入失败，清理临时文件
-      try {
-        await fs.unlink(tempFile).catch(() => { });
-      } catch { }
-      throw writeError;
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Failed to write questions:', error);
-    return false;
-  } finally {
-    if (release) {
-      try {
-        await release();
-      } catch (e) {
-        console.error('Failed to release lock:', e);
-      }
-    }
-  }
+// Validate a question payload before persisting it.
+function isValidQuestion(q) {
+  return (
+    q && typeof q === 'object' &&
+    typeof q.originalSentence === 'string' &&
+    q.originalSentence.trim().length > 0 &&
+    q.originalSentence.length <= 2000 &&
+    Array.isArray(q.words)
+  );
 }
 
 // API Routes
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/user', userRoutes);
 
 // GET /api/questions - Get all questions
@@ -195,24 +162,29 @@ app.get('/api/questions', async (req, res) => {
   }
 });
 
-// POST /api/questions - Save a new question (优化版本，使用原子操作)
-app.post('/api/questions', async (req, res) => {
+// POST /api/questions - Save a new question (auth-protected, validated, atomic)
+app.post('/api/questions', authenticateToken, async (req, res) => {
   let release;
   try {
     const newQuestion = req.body;
 
-    // 获取文件锁
+    if (!isValidQuestion(newQuestion)) {
+      return res.status(400).json({ error: 'Invalid question payload' });
+    }
+
+    // 获取文件锁（锁独立的 .lock 文件，不锁会被 rename 替换的数据文件本身）
     release = await lockfile.lock(QUESTIONS_FILE, {
-      retries: {
-        retries: 20,
-        minTimeout: 100,
-        maxTimeout: 500
-      },
-      lockfilePath: QUESTIONS_FILE + '.lock'
+      retries: { retries: 20, minTimeout: 100, maxTimeout: 500 },
+      lockfilePath: QUESTIONS_FILE + '.lock',
+      realpath: false,
     });
 
     // 读取最新数据（在锁保护下读取，确保数据是最新的）
     const questions = await readQuestions();
+
+    if (questions.length >= MAX_BANK_SIZE) {
+      return res.status(507).json({ error: 'Question bank is full' });
+    }
 
     // 检查是否已存在
     const exists = questions.some(q => q.originalSentence === newQuestion.originalSentence);
@@ -224,22 +196,22 @@ app.post('/api/questions', async (req, res) => {
     questions.push(newQuestion);
 
     // 原子写入：先写入临时文件，然后原子性地重命名
-    const tempFile = QUESTIONS_FILE + '.' + Date.now() + '.tmp';
+    const tempFile = `${QUESTIONS_FILE}.${crypto.randomUUID()}.tmp`;
     try {
       await fs.writeFile(tempFile, JSON.stringify(questions, null, 2), 'utf-8');
       await fs.rename(tempFile, QUESTIONS_FILE);
     } catch (writeError) {
-      // 如果写入失败，清理临时文件
-      try {
-        await fs.unlink(tempFile).catch(() => { });
-      } catch { }
+      await fs.unlink(tempFile).catch(() => { });
       throw writeError;
     }
 
     res.json({ message: 'Question saved', count: questions.length });
   } catch (error) {
     console.error('Failed to save question:', error);
-    res.status(500).json({ error: 'Failed to save question', details: error.message });
+    res.status(500).json({
+      error: 'Failed to save question',
+      details: isProduction ? undefined : error.message,
+    });
   } finally {
     if (release) {
       try {
@@ -392,7 +364,7 @@ app.post('/api/generate', generateLimiter, async (req, res) => {
       error: '生成失败',
       message: '生成句子分析时出错，请稍后再试。',
       provider: error.provider || 'unknown',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: isProduction ? undefined : error.message
     });
   }
 });
@@ -404,6 +376,9 @@ app.post('/api/analyze-sentence', generateLimiter, async (req, res) => {
 
     if (!sentence || typeof sentence !== 'string' || sentence.trim().length === 0) {
       return res.status(400).json({ error: 'Sentence is required and must be a non-empty string' });
+    }
+    if (sentence.length > 2000) {
+      return res.status(400).json({ error: 'Sentence is too long (max 2000 chars)' });
     }
 
     // 检查AI服务是否已初始化
@@ -479,7 +454,7 @@ app.post('/api/analyze-sentence', generateLimiter, async (req, res) => {
       error: '分析失败',
       message: '分析句子时出错，请稍后再试。',
       provider: error.provider || 'unknown',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: isProduction ? undefined : error.message
     });
   }
 });
@@ -491,6 +466,9 @@ app.post('/api/ocr-normalize', generateLimiter, async (req, res) => {
 
     if (!sentence || typeof sentence !== 'string' || sentence.trim().length === 0) {
       return res.status(400).json({ error: 'Sentence is required and must be a non-empty string' });
+    }
+    if (sentence.length > 4000) {
+      return res.status(400).json({ error: 'Text is too long (max 4000 chars)' });
     }
 
     if (!sentenceAnalysisService) {
@@ -553,9 +531,14 @@ app.post('/api/ocr-normalize', generateLimiter, async (req, res) => {
       error: '规范化失败',
       message: '规范化OCR文本时出错，请稍后再试。',
       provider: error.provider || 'unknown',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: isProduction ? undefined : error.message
     });
   }
+});
+
+// Any unmatched /api/* path returns JSON 404 (never falls through to the SPA).
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'Not found' });
 });
 
 // Start server
@@ -570,11 +553,9 @@ async function startServer() {
       await fs.access(DIST_DIR);
       app.use(express.static(DIST_DIR));
 
-      // Handle React Router - serve index.html for all non-API routes
+      // SPA fallback: serve index.html for all non-API routes (/api handled above).
       app.get('*', (req, res) => {
-        if (!req.path.startsWith('/api')) {
-          res.sendFile(path.join(DIST_DIR, 'index.html'));
-        }
+        res.sendFile(path.join(DIST_DIR, 'index.html'));
       });
       console.log(`📦 Serving static files from: ${DIST_DIR}`);
     } catch (error) {
@@ -589,10 +570,9 @@ async function startServer() {
       console.log(`🌐 Production mode enabled`);
     }
     console.log(`🔒 File locking enabled for concurrent safety`);
-    console.log(`🚦 API rate limiting enabled (30 requests per 5 minutes per IP)`);
-    console.log(`🔒 Trust proxy enabled for Nginx compatibility`);
+    console.log(`🚦 API rate limiting enabled`);
+    if (TRUST_PROXY) console.log(`🔀 Trust proxy enabled`);
   });
 }
 
 startServer().catch(console.error);
-

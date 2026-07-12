@@ -5,12 +5,13 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const verboseSqlite = sqlite3.verbose();
+// verbose() adds heavy stack capture meant for debugging — enable only outside production.
+const driver = process.env.NODE_ENV === 'production' ? sqlite3 : sqlite3.verbose();
 
 const dbPath = path.join(__dirname, '../../database.sqlite');
 console.log(`[DB] Database path: ${dbPath}`);
 
-const db = new verboseSqlite.Database(dbPath, (err) => {
+const db = new driver.Database(dbPath, (err) => {
     if (err) {
         console.error('[DB] Connection error:', err.message);
     } else {

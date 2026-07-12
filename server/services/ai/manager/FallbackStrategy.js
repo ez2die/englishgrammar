@@ -42,7 +42,8 @@ export class FallbackStrategy {
 
       triedProviders.push(provider.name);
 
-      // 尝试调用，支持重试
+      // 尝试调用；仅对「可重试」错误在本提供商内重试，否则立即换下一个提供商
+      let lastError;
       for (let attempt = 0; attempt <= this.config.retryCount; attempt++) {
         try {
           if (attempt > 0) {
@@ -57,29 +58,22 @@ export class FallbackStrategy {
           return result;
 
         } catch (error) {
-          const isLastAttempt = attempt === this.config.retryCount;
-          const shouldContinue = this.shouldContinue(error, isLastAttempt);
-
+          lastError = error;
           console.log(`[Fallback] ${provider.name} failed (attempt ${attempt + 1}): ${error.message}`);
 
-          if (!shouldContinue) {
-            // 致命错误，停止尝试所有提供商
-            console.error(`[Fallback] Fatal error from ${provider.name}, stopping fallback`);
-            throw error;
+          // 不可重试的错误（认证、配额、无效响应）→ 不在本提供商重试，直接换下一个
+          if (!this.isRetryable(error)) {
+            break;
           }
-
-          if (isLastAttempt) {
-            // 最后一次尝试也失败，记录错误并尝试下一个提供商
-            errors.push({
-              provider: provider.name,
-              error: error,
-              attempts: attempt + 1,
-            });
-            break; // 跳出重试循环，尝试下一个提供商
+          // 可重试但已到最后一次 → 换下一个提供商
+          if (attempt === this.config.retryCount) {
+            break;
           }
-          // 否则继续重试
+          // 否则继续在本提供商重试
         }
       }
+
+      errors.push({ provider: provider.name, error: lastError });
     }
 
     // 所有提供商都失败
@@ -87,42 +81,30 @@ export class FallbackStrategy {
   }
 
   /**
-   * 判断是否应该继续尝试下一个提供商
-   * @param {Error} error - 错误对象
-   * @param {boolean} isLastAttempt - 是否是最后一次尝试
+   * 判断某个错误是否值得在「同一个提供商」上重试。
+   * 优先信任 provider 已计算好的 error.retryable（AIError），
+   * 否则退回到基于状态码/消息的启发式判断。
+   * 注意：无论是否可重试，失败后都会继续尝试「下一个」提供商。
+   * @param {Error} error
    * @returns {boolean}
    */
-  shouldContinue(error, isLastAttempt) {
-    // 如果是AIError，使用其retryable属性
+  isRetryable(error) {
     if (error instanceof AIError) {
-      // 认证错误不应该继续
-      if (error.type === AIErrorType.AUTH_ERROR) {
-        return false;
-      }
-      // 其他错误可以继续（配额耗尽、限流、网络错误等）
+      return error.retryable === true;
+    }
+    if (error.status === 401 || error.status === 403) return false;
+    if (error.status === 429) return true;
+    if (error.status >= 500 && error.status <= 599) return true;
+    if (
+      error.message?.includes('network') ||
+      error.message?.includes('timeout') ||
+      error.message?.includes('fetch') ||
+      error.code === 'ECONNREFUSED' ||
+      error.code === 'ETIMEDOUT'
+    ) {
       return true;
     }
-
-    // 对于非AIError，根据状态码判断
-    if (error.status === 401 || error.status === 403) {
-      return false; // 认证错误，不继续
-    }
-
-    // 配额耗尽、限流、网络错误等可以继续
-    if (error.status === 429 || error.status === 503) {
-      return true;
-    }
-
-    // 网络错误可以继续
-    if (error.message?.includes('network') || 
-        error.message?.includes('timeout') ||
-        error.message?.includes('fetch') ||
-        error.message?.includes('ECONNREFUSED')) {
-      return true;
-    }
-
-    // 其他错误默认可以继续（在最后一次尝试时）
-    return isLastAttempt;
+    return false;
   }
 
   /**

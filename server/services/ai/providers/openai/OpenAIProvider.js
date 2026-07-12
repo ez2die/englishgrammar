@@ -10,6 +10,9 @@ export class OpenAIProvider extends BaseAIProvider {
     super(config);
     this.client = config.apiKey ? new OpenAI({
       apiKey: config.apiKey,
+      baseURL: config.apiBase ? config.apiBase.replace(/\/+$/, '') : undefined,
+      timeout: 45000,   // hard cap so a hung endpoint can't block for the SDK default (~600s)
+      maxRetries: 0,    // retries are handled by FallbackStrategy, not doubled by the SDK
     }) : null;
   }
 
@@ -86,7 +89,7 @@ Do NOT use alternative names like "sentence" or "mainClauseStructure".`;
         };
       }
 
-      const response = await this.client.chat.completions.create(requestOptions);
+      const response = await this.client.chat.completions.create(requestOptions, { timeout: opts.timeout });
 
       const content = response.choices[0]?.message?.content;
       if (!content) {

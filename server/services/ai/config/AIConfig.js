@@ -17,13 +17,13 @@ function createAIConfig() {
           enabled: true,
           priority: 1,
           get apiKey() { return process.env.QWEN_API_KEY || ''; },
-          model: 'qwen-flash',
-          fallbackModel: 'qwen-turbo',
+          model: 'qwen3-max-2026-01-23',
+          fallbackModel: 'qwen3.5-plus',
           options: {
             temperature: 0.7,
             maxTokens: 2000,
           },
-          get apiBase() { return process.env.QWEN_API_BASE || 'https://dashscope.aliyuncs.com/compatible-mode/v1'; },
+          get apiBase() { return process.env.QWEN_API_BASE || 'https://coding.dashscope.aliyuncs.com/v1'; },
         },
         deepseek: {
           enabled: true,
@@ -54,7 +54,7 @@ function createAIConfig() {
         },
         openai: {
           enabled: true,
-          priority: 3,
+          priority: 4,
           get apiKey() { return process.env.OPENAI_API_KEY || ''; },
           model: 'gpt-4o-mini',
           fallbackModel: 'gpt-3.5-turbo',
@@ -65,7 +65,7 @@ function createAIConfig() {
         },
         claude: {
           enabled: false,
-          priority: 4,
+          priority: 5,
           get apiKey() { return process.env.CLAUDE_API_KEY || ''; },
           model: 'claude-3-haiku-20240307',
           options: {

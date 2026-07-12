@@ -10,11 +10,14 @@ export class DeepSeekProvider extends BaseAIProvider {
   constructor(config) {
     super(config);
     // 使用DashScope兼容模式API（OpenAI兼容格式）
+    const baseURL = (config.apiBase || 'https://dashscope.aliyuncs.com/compatible-mode/v1').replace(/\/+$/, '');
     this.client = config.apiKey ? new OpenAI({
       apiKey: config.apiKey,
-      baseURL: config.apiBase || 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+      baseURL,
+      timeout: 45000,   // hard cap so a hung endpoint can't block for the SDK default (~600s)
+      maxRetries: 0,    // retries are handled by FallbackStrategy, not doubled by the SDK
     }) : null;
-    this.apiBase = config.apiBase || 'https://dashscope.aliyuncs.com/compatible-mode/v1';
+    this.apiBase = baseURL;
   }
 
   /**
@@ -90,7 +93,7 @@ Do NOT use alternative names like "sentence" or "mainClauseStructure".`;
         };
       }
 
-      const response = await this.client.chat.completions.create(requestOptions);
+      const response = await this.client.chat.completions.create(requestOptions, { timeout: opts.timeout });
 
       const content = response.choices[0]?.message?.content;
       if (!content) {

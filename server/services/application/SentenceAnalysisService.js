@@ -44,7 +44,7 @@ export class SentenceAnalysisService {
       schema: schema,
       systemPrompt: systemPrompt,
       temperature: 0.7,
-      maxTokens: 2000,
+      maxTokens: 3000,
     };
 
     try {
@@ -175,7 +175,7 @@ export class SentenceAnalysisService {
       schema: schema,
       systemPrompt: systemPrompt, // 添加 system prompt
       temperature: 0.7,
-      maxTokens: 2000,
+      maxTokens: 3000,
     };
 
     try {
@@ -229,7 +229,16 @@ export class SentenceAnalysisService {
       
       // 再次清理首尾空白
       cleanedContent = cleanedContent.trim();
-      
+
+      // 若响应被推理/散文包裹（部分模型会输出思考过程），提取最外层 {...} 再解析
+      if (!cleanedContent.startsWith('{')) {
+        const first = cleanedContent.indexOf('{');
+        const last = cleanedContent.lastIndexOf('}');
+        if (first !== -1 && last > first) {
+          cleanedContent = cleanedContent.slice(first, last + 1);
+        }
+      }
+
       // 尝试解析JSON
       let data = JSON.parse(cleanedContent);
 

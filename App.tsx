@@ -489,19 +489,29 @@ const App: React.FC = () => {
     setSubmitted(true);
     setShowResult(true);
 
-    // Calculate score
+    // Calculate score. Do NOT use getIsCorrect() here — it gates on `submitted`,
+    // which is still false in this render's closure (setSubmitted is async), so
+    // it would return null for every word and zero out the score.
+    const isRoleCorrect = (idx: number, correctRole: GrammarRole) => {
+      const userRole = assignedRoles[idx];
+      if (userRole === correctRole) return true;
+      if (!userRole && correctRole === GrammarRole.CONNECTIVE) return true;
+      return false;
+    };
+
     let correctCount = 0;
     let totalCount = 0;
     currentData.words.forEach((_, idx) => {
       const correctRole = currentData.wordRoles[idx];
       if (correctRole !== GrammarRole.CONNECTIVE) {
         totalCount++;
-        if (getIsCorrect(idx, correctRole)) correctCount++;
+        if (isRoleCorrect(idx, correctRole)) correctCount++;
       }
     });
 
     const structureCorrect = selectedStructure === currentData.structureType;
-    const allWordsCorrect = correctCount === totalCount; // vacuous truth: zero non-connective words counts as correct
+    // Require at least one gradable word so an all-connective sentence can't be "fully correct".
+    const allWordsCorrect = totalCount > 0 && correctCount === totalCount;
     const fullyCorrect = allWordsCorrect && structureCorrect;
 
     // 只有在全部正确（角色+结构）时才积分；否则 0 分
@@ -1019,7 +1029,7 @@ const App: React.FC = () => {
       }
     });
     const structureCorrect = selectedStructure === currentData.structureType;
-    const allWordsCorrect = correctCount === totalCount;
+    const allWordsCorrect = totalCount > 0 && correctCount === totalCount;
     const fullyCorrect = allWordsCorrect && structureCorrect;
     const roleAccuracy = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
     const status = fullyCorrect ? 'perfect' : (structureCorrect || correctCount > 0 ? 'partial' : 'incorrect');
@@ -1642,7 +1652,7 @@ const App: React.FC = () => {
               <div className="bg-white/15 rounded-2xl p-4 backdrop-blur-sm">
                 <div className="text-xs font-black uppercase mb-3 opacity-80">C. Explanation</div>
                 <div className="space-y-2.5">
-                  {currentData.explanation.split('。').filter(s => s.trim()).map((sentence, idx) => {
+                  {(currentData.explanation ?? '').split('。').filter(s => s.trim()).map((sentence, idx) => {
                     const trimmed = sentence.trim();
                     if (!trimmed) return null;
 

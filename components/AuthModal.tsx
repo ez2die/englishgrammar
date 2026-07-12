@@ -3,6 +3,11 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 
+// Social login is currently stubbed (the handlers only send mock tokens, which
+// the backend rejects unless auth mocks are explicitly enabled). Keep the UI
+// hidden until real SDK flows are wired up. Enable with VITE_SOCIAL_LOGIN=true.
+const SOCIAL_LOGIN_ENABLED = import.meta.env.VITE_SOCIAL_LOGIN === 'true';
+
 interface AuthModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -173,40 +178,44 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                         </button>
                     </form>
 
-                    {/* Social Login Divider */}
-                    <div className="relative my-6">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-200"></div>
+                    {SOCIAL_LOGIN_ENABLED && (
+                      <>
+                        {/* Social Login Divider */}
+                        <div className="relative my-6">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-gray-200"></div>
+                            </div>
+                            <div className="relative flex justify-center text-sm">
+                                <span className="px-2 bg-white text-gray-400 font-medium">Or continue with</span>
+                            </div>
                         </div>
-                        <div className="relative flex justify-center text-sm">
-                            <span className="px-2 bg-white text-gray-400 font-medium">Or continue with</span>
-                        </div>
-                    </div>
 
-                    {/* Social Buttons */}
-                    <div className="grid grid-cols-3 gap-3 mb-6">
-                        <button
-                            onClick={() => handleSocialLogin('google')}
-                            className="flex flex-col items-center justify-center p-2 rounded-xl border-2 border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all active:scale-95 group"
-                        >
-                            <div className="text-2xl mb-1 group-hover:scale-110 transition-transform">🇬🇧</div>
-                            <span className="text-[10px] font-bold text-gray-500">Google</span>
-                        </button>
-                        <button
-                            onClick={() => handleSocialLogin('apple')}
-                            className="flex flex-col items-center justify-center p-2 rounded-xl border-2 border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all active:scale-95 group"
-                        >
-                            <div className="text-2xl mb-1 group-hover:scale-110 transition-transform">🍎</div>
-                            <span className="text-[10px] font-bold text-gray-500">Apple</span>
-                        </button>
-                        <button
-                            onClick={() => handleSocialLogin('wechat')}
-                            className="flex flex-col items-center justify-center p-2 rounded-xl border-2 border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all active:scale-95 group"
-                        >
-                            <div className="text-2xl mb-1 group-hover:scale-110 transition-transform">💬</div>
-                            <span className="text-[10px] font-bold text-gray-500">WeChat</span>
-                        </button>
-                    </div>
+                        {/* Social Buttons */}
+                        <div className="grid grid-cols-3 gap-3 mb-6">
+                            <button
+                                onClick={() => handleSocialLogin('google')}
+                                className="flex flex-col items-center justify-center p-2 rounded-xl border-2 border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all active:scale-95 group"
+                            >
+                                <div className="text-2xl mb-1 group-hover:scale-110 transition-transform">🇬🇧</div>
+                                <span className="text-[10px] font-bold text-gray-500">Google</span>
+                            </button>
+                            <button
+                                onClick={() => handleSocialLogin('apple')}
+                                className="flex flex-col items-center justify-center p-2 rounded-xl border-2 border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all active:scale-95 group"
+                            >
+                                <div className="text-2xl mb-1 group-hover:scale-110 transition-transform">🍎</div>
+                                <span className="text-[10px] font-bold text-gray-500">Apple</span>
+                            </button>
+                            <button
+                                onClick={() => handleSocialLogin('wechat')}
+                                className="flex flex-col items-center justify-center p-2 rounded-xl border-2 border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all active:scale-95 group"
+                            >
+                                <div className="text-2xl mb-1 group-hover:scale-110 transition-transform">💬</div>
+                                <span className="text-[10px] font-bold text-gray-500">WeChat</span>
+                            </button>
+                        </div>
+                      </>
+                    )}
 
                     {/* Toggle */}
                     <div className="mt-6 text-center">

@@ -182,7 +182,12 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onTextRecognized, onError
         }, 100);
       };
       img.onerror = () => {
-        throw new Error('图片加载失败，请重试');
+        // Runs asynchronously — the surrounding try/catch has already returned,
+        // so throwing here would be swallowed and leave the UI stuck. Set state.
+        const errorMsg = '图片加载失败，请重试';
+        setError(errorMsg);
+        setState('error');
+        if (onError) onError(errorMsg);
       };
       img.src = url;
     } catch (err: any) {
@@ -693,17 +698,24 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onTextRecognized, onError
   };
 
 
-  // 清理资源
+  // Revoke the previous object URL whenever previewUrl changes (and on unmount).
   useEffect(() => {
     return () => {
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
       }
+    };
+  }, [previewUrl]);
+
+  // Stop the camera stream only on unmount — must NOT be tied to previewUrl,
+  // otherwise updating the preview would kill an active camera session.
+  useEffect(() => {
+    return () => {
       if (cameraStreamRef.current) {
         cameraStreamRef.current.getTracks().forEach(track => track.stop());
       }
     };
-  }, [previewUrl]);
+  }, []);
 
   // 样式配置
   const cardBg = isFresh

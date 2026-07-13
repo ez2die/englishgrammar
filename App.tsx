@@ -20,9 +20,7 @@ const App: React.FC = () => {
 
   // Game State
   const [currentLevel, setCurrentLevel] = useState<DifficultyLevel | null>(null);
-  const [score, setScore] = useState(0);
-  const [streak, setStreak] = useState(0);
-  // Points system (server-computed): per-question award + running total
+  // Points system (server-computed, persisted) is the single scoring system.
   const [pointsInfo, setPointsInfo] = useState<{ earned: number; perfect: boolean; milestoneBonus: number } | null>(null);
   const [totalPoints, setTotalPoints] = useState<number | null>(null);
   // Daily check-in
@@ -547,13 +545,10 @@ const App: React.FC = () => {
     const allWordsCorrect = totalCount > 0 && correctCount === totalCount;
     const fullyCorrect = allWordsCorrect && structureCorrect;
 
-    // 只有在全部正确（角色+结构）时才积分；否则 0 分
+    // rawScore is still stored on practice_history (feeds the profile "Avg Score");
+    // the visible reward is the server-side points system, not this number.
     const accuracy = totalCount > 0 ? (correctCount / totalCount) * 100 : 0;
     const rawScore = Math.round(accuracy + (structureCorrect ? 20 : 0));
-    const newScore = fullyCorrect ? rawScore : 0;
-
-    setScore(prev => prev + newScore);
-    setStreak(prev => (fullyCorrect ? prev + 1 : 0));
 
     setTimeout(() => {
       if (resultRef.current) {
@@ -849,10 +844,6 @@ const App: React.FC = () => {
       ? 'bg-white/90 backdrop-blur-sm border-emerald-200'
       : 'bg-white/80 backdrop-blur-sm border-purple-200';
 
-    const scoreColor = isFresh ? 'text-emerald-600' : 'text-purple-600';
-    const streakTextColor = isFresh ? 'text-cyan-600' : 'text-orange-600';
-    const streakBorderColor = isFresh ? 'border-cyan-200' : 'border-orange-200';
-
     const level1Btn = isFresh
       ? 'bg-gradient-to-r from-emerald-300 to-teal-400 border-emerald-500 text-emerald-50'
       : 'bg-gradient-to-r from-green-400 to-emerald-500 border-green-600 text-green-100';
@@ -893,36 +884,6 @@ const App: React.FC = () => {
           </h1>
           <p className={`${isFresh ? 'text-slate-600' : 'text-gray-600'} text-sm font-medium`}>Master English Sentence Structure</p>
         </div>
-
-        {/* Score Display */}
-        {(score > 0 || streak > 0 || pointsInfo) && (
-          <div className="max-w-md mx-auto mb-6 flex gap-3">
-            <div className={`flex-1 ${cardBg} rounded-2xl p-3 border-2 shadow-lg`}>
-              <div className={`text-xs ${isFresh ? 'text-slate-500' : 'text-gray-500'} font-bold uppercase mb-1`}>Score</div>
-              <div className={`text-2xl font-black ${scoreColor}`}>{score}</div>
-            </div>
-            {streak > 0 && (
-              <div className={`flex-1 ${cardBg} ${streakBorderColor} rounded-2xl p-3 border-2 shadow-lg`}>
-                <div className={`text-xs ${isFresh ? 'text-slate-500' : 'text-gray-500'} font-bold uppercase mb-1`}>Streak</div>
-                <div className={`text-2xl font-black ${streakTextColor} flex items-center gap-1`}>
-                  🔥 {streak}
-                </div>
-              </div>
-            )}
-            {pointsInfo && (
-              <div className={`flex-1 ${cardBg} border-amber-200 rounded-2xl p-3 border-2 shadow-lg`}>
-                <div className={`text-xs ${isFresh ? 'text-slate-500' : 'text-gray-500'} font-bold uppercase mb-1`}>积分</div>
-                <div className="text-2xl font-black text-amber-500 flex items-center gap-1">
-                  +{pointsInfo.earned}
-                  {pointsInfo.perfect && <span className="text-xs">⭐×1.5</span>}
-                </div>
-                {pointsInfo.milestoneBonus > 0 && (
-                  <div className="text-[10px] font-bold text-amber-600">🎯 里程碑 +{pointsInfo.milestoneBonus}</div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Daily check-in */}
         {isAuthenticated && checkin && (

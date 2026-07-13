@@ -18,7 +18,7 @@ interface HistoryViewProps {
 const HistoryView: React.FC<HistoryViewProps> = ({ onClose }) => {
     const [history, setHistory] = useState<PracticeRecord[]>([]);
     const [loading, setLoading] = useState(true);
-    const [stats, setStats] = useState<{ totalPractices: number; averageScore: number } | null>(null);
+    const [stats, setStats] = useState<{ totalPractices: number; averageScore: number; totalPoints?: number } | null>(null);
     const [activeTab, setActiveTab] = useState<'activity' | 'profile'>('activity');
 
     const { token, user, logout } = useAuth();
@@ -82,6 +82,8 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onClose }) => {
                                 <span>Practices: {stats?.totalPractices || 0}</span>
                                 <span>•</span>
                                 <span>Avg Score: {stats?.averageScore || 0}</span>
+                                <span>•</span>
+                                <span>🏆 {stats?.totalPoints || 0}</span>
                             </div>
                         </div>
                     </div>

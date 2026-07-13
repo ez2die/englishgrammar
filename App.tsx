@@ -21,6 +21,9 @@ const App: React.FC = () => {
   const [currentLevel, setCurrentLevel] = useState<DifficultyLevel | null>(null);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
+  // Points system (server-computed): per-question award + running total
+  const [pointsInfo, setPointsInfo] = useState<{ earned: number; perfect: boolean; milestoneBonus: number } | null>(null);
+  const [totalPoints, setTotalPoints] = useState<number | null>(null);
 
   // Phase 1: Sorting State
   const [sortingSelection, setSortingSelection] = useState<number[]>([]);
@@ -77,6 +80,7 @@ const App: React.FC = () => {
     setSkeletonSelection([]);
     setErrorMsg(null);
     setSourceInfo('');
+    setPointsInfo(null);
 
     try {
       // 优先尝试从问题库加载（如果有足够的问题）
@@ -247,6 +251,18 @@ const App: React.FC = () => {
       setShowAuthModal(true);
     }
   };
+
+  // Load the user's running points total on login (and clear on logout).
+  useEffect(() => {
+    if (isAuthenticated && token) {
+      fetch('/api/user/stats', { headers: { 'Authorization': `Bearer ${token}` } })
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => { if (d) setTotalPoints(d.totalPoints ?? 0); })
+        .catch(() => { });
+    } else {
+      setTotalPoints(null);
+    }
+  }, [isAuthenticated, token]);
 
   const returnToMenu = () => {
     setData(null);
@@ -726,9 +742,22 @@ const App: React.FC = () => {
           sentence: currentData.originalSentence,
           structure_type: currentData.structureType,
           score: rawScore, // Store raw score regardless of correctness
-          analysis_snapshot: snapshot
+          analysis_snapshot: snapshot,
+          // Result details for server-side points computation
+          level: currentLevel ?? currentData.level ?? 'Intermediate',
+          correct_count: correctCount,
+          total_count: totalCount,
+          structure_correct: structureCorrect
         })
-      }).catch(err => console.error('Failed to save history:', err));
+      })
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => {
+          if (d?.points) {
+            setPointsInfo({ earned: d.points.earned, perfect: d.points.perfect, milestoneBonus: d.points.milestoneBonus });
+            if (typeof d.points.total === 'number') setTotalPoints(d.points.total);
+          }
+        })
+        .catch(err => console.error('Failed to save history:', err));
     }
   };
 
@@ -837,6 +866,9 @@ const App: React.FC = () => {
                 `}
             >
               <span>{isAuthenticated ? '👤 ' + user?.username : '🔐 Login'}</span>
+              {isAuthenticated && totalPoints !== null && (
+                <span className={`${isFresh ? 'text-amber-600' : 'text-amber-500'} font-black`}>🏆 {totalPoints}</span>
+              )}
             </button>
           </div>
           <h1 className={`text-5xl font-black text-transparent bg-clip-text ${titleGradient} mb-2`}>
@@ -846,7 +878,7 @@ const App: React.FC = () => {
         </div>
 
         {/* Score Display */}
-        {(score > 0 || streak > 0) && (
+        {(score > 0 || streak > 0 || pointsInfo) && (
           <div className="max-w-md mx-auto mb-6 flex gap-3">
             <div className={`flex-1 ${cardBg} rounded-2xl p-3 border-2 shadow-lg`}>
               <div className={`text-xs ${isFresh ? 'text-slate-500' : 'text-gray-500'} font-bold uppercase mb-1`}>Score</div>
@@ -858,6 +890,18 @@ const App: React.FC = () => {
                 <div className={`text-2xl font-black ${streakTextColor} flex items-center gap-1`}>
                   🔥 {streak}
                 </div>
+              </div>
+            )}
+            {pointsInfo && (
+              <div className={`flex-1 ${cardBg} border-amber-200 rounded-2xl p-3 border-2 shadow-lg`}>
+                <div className={`text-xs ${isFresh ? 'text-slate-500' : 'text-gray-500'} font-bold uppercase mb-1`}>积分</div>
+                <div className="text-2xl font-black text-amber-500 flex items-center gap-1">
+                  +{pointsInfo.earned}
+                  {pointsInfo.perfect && <span className="text-xs">⭐×1.5</span>}
+                </div>
+                {pointsInfo.milestoneBonus > 0 && (
+                  <div className="text-[10px] font-bold text-amber-600">🎯 里程碑 +{pointsInfo.milestoneBonus}</div>
+                )}
               </div>
             )}
           </div>

@@ -46,6 +46,31 @@ function initDB() {
             if (err) console.error('[DB] Error creating practice_history table:', err);
             else console.log('[DB] Practice History table ready.');
         });
+
+        // Points: running total on users (migration is idempotent — duplicate
+        // column error just means it already exists).
+        db.run(`ALTER TABLE users ADD COLUMN total_points INTEGER NOT NULL DEFAULT 0`, (err) => {
+            if (err && !/duplicate column/i.test(err.message)) {
+                console.error('[DB] Error adding total_points column:', err);
+            }
+        });
+
+        // Points ledger: one row per award, auditable breakdown.
+        db.run(`CREATE TABLE IF NOT EXISTS points_ledger (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      points INTEGER NOT NULL,
+      base_points INTEGER NOT NULL,
+      accuracy_pct INTEGER NOT NULL,
+      level TEXT,
+      perfect INTEGER NOT NULL DEFAULT 0,
+      milestone_bonus INTEGER NOT NULL DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    )`, (err) => {
+            if (err) console.error('[DB] Error creating points_ledger table:', err);
+            else console.log('[DB] Points ledger table ready.');
+        });
     });
 }
 

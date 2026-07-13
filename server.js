@@ -19,7 +19,6 @@ import { SentenceAnalysisService } from './server/services/application/SentenceA
 // Database, config, middleware, routes
 import { initDB } from './server/db/database.js';
 import { ALLOWED_ORIGINS, TRUST_PROXY } from './server/config/env.js';
-import { authenticateToken } from './server/middleware/auth.js';
 import authRoutes from './server/routes/auth.js';
 import userRoutes from './server/routes/user.js';
 
@@ -104,6 +103,15 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Lenient limiter for shared question-bank writes (paired with generate calls).
+const writeLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 100,
+  message: { error: '请求过于频繁，请稍后再试。' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Ensure questions directory exists
 async function ensureQuestionsDir() {
   try {
@@ -167,8 +175,10 @@ app.get('/api/questions', async (req, res) => {
   }
 });
 
-// POST /api/questions - Save a new question (auth-protected, validated, atomic)
-app.post('/api/questions', authenticateToken, async (req, res) => {
+// POST /api/questions - Save a generated question to the SHARED bank (an app-level
+// cache write, not a per-user action). Open by design, but rate-limited, shape-
+// validated, size-capped, and written atomically under a file lock.
+app.post('/api/questions', writeLimiter, async (req, res) => {
   let release;
   try {
     const newQuestion = req.body;

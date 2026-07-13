@@ -87,22 +87,20 @@ const App: React.FC = () => {
     setPointsInfo(null);
 
     try {
-      // 优先尝试从问题库加载（如果有足够的问题）
+      // Strategy: users mostly get a fresh AI question; a small FIXED chance
+      // shows an old question for review. The probability does NOT change with
+      // bank size — a bigger bank is just a larger review pool, not more review.
+      const REVIEW_PROBABILITY = 0.2; // 20% review · 80% new AI question
       const bankSize = await storageService.getBankSize(level);
 
-      // 如果问题库有足够的问题（>=5个），提高使用问题库的概率
-      if (bankSize >= 5) {
-        const useBank = bankSize >= 10 ? Math.random() > 0.3 : Math.random() > 0.5;
-
-        if (useBank) {
-          const bankData = await storageService.getRandomQuestion(level, previousSentence);
-          if (bankData) {
-            await new Promise(resolve => setTimeout(resolve, 600));
-            setData(bankData);
-            setSourceInfo('Review Mode');
-            setLoading(false);
-            return;
-          }
+      if (bankSize > 0 && Math.random() < REVIEW_PROBABILITY) {
+        const bankData = await storageService.getRandomQuestion(level, previousSentence);
+        if (bankData) {
+          await new Promise(resolve => setTimeout(resolve, 600));
+          setData(bankData);
+          setSourceInfo('Review Mode');
+          setLoading(false);
+          return;
         }
       }
 

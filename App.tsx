@@ -24,6 +24,9 @@ const App: React.FC = () => {
   // Points system (server-computed): per-question award + running total
   const [pointsInfo, setPointsInfo] = useState<{ earned: number; perfect: boolean; milestoneBonus: number } | null>(null);
   const [totalPoints, setTotalPoints] = useState<number | null>(null);
+  // Daily check-in
+  const [checkin, setCheckin] = useState<{ checkedInToday: boolean; streak: number; nextStreak: number; todayReward: number } | null>(null);
+  const [checkinToast, setCheckinToast] = useState<string | null>(null);
 
   // Phase 1: Sorting State
   const [sortingSelection, setSortingSelection] = useState<number[]>([]);
@@ -252,17 +255,39 @@ const App: React.FC = () => {
     }
   };
 
-  // Load the user's running points total on login (and clear on logout).
+  // Load the user's running points total + check-in status on login (clear on logout).
   useEffect(() => {
     if (isAuthenticated && token) {
       fetch('/api/user/stats', { headers: { 'Authorization': `Bearer ${token}` } })
         .then(r => (r.ok ? r.json() : null))
         .then(d => { if (d) setTotalPoints(d.totalPoints ?? 0); })
         .catch(() => { });
+      fetch('/api/user/checkin', { headers: { 'Authorization': `Bearer ${token}` } })
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => { if (d) setCheckin(d); })
+        .catch(() => { });
     } else {
       setTotalPoints(null);
+      setCheckin(null);
     }
   }, [isAuthenticated, token]);
+
+  const handleCheckin = async () => {
+    if (!token || !checkin || checkin.checkedInToday) return;
+    try {
+      const r = await fetch('/api/user/checkin', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+      if (!r.ok) return;
+      const d = await r.json();
+      if (!d.alreadyCheckedIn) {
+        setTotalPoints(d.totalPoints);
+        setCheckin({ checkedInToday: true, streak: d.streak, nextStreak: d.streak, todayReward: 0 });
+        setCheckinToast(`签到成功 +${d.earned}${d.streakBonus > 0 ? ` · 连签 ${d.streak} 天` : ''}`);
+        setTimeout(() => setCheckinToast(null), 3000);
+      } else {
+        setCheckin(c => (c ? { ...c, checkedInToday: true, todayReward: 0 } : c));
+      }
+    } catch { /* network */ }
+  };
 
   const returnToMenu = () => {
     setData(null);
@@ -904,6 +929,39 @@ const App: React.FC = () => {
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Daily check-in */}
+        {isAuthenticated && checkin && (
+          <div className="max-w-md mx-auto mb-6">
+            <div className={`${cardBg} rounded-2xl p-4 border-2 shadow-lg flex items-center justify-between gap-3`}>
+              <div className="min-w-0">
+                <div className={`text-sm font-black ${isFresh ? 'text-slate-800' : 'text-gray-800'}`}>📅 每日签到</div>
+                <div className={`text-xs font-medium ${isFresh ? 'text-slate-500' : 'text-gray-500'}`}>
+                  {checkin.checkedInToday
+                    ? `已连续签到 ${checkin.streak} 天 · 明天再来 🔥`
+                    : `连签 ${checkin.streak} 天 · 今日可得 +${checkin.todayReward}`}
+                </div>
+              </div>
+              <button
+                onClick={handleCheckin}
+                disabled={checkin.checkedInToday}
+                type="button"
+                className={`shrink-0 px-4 h-10 rounded-xl font-black text-sm shadow transition-all
+                  ${checkin.checkedInToday
+                    ? 'bg-gray-200 text-gray-400 cursor-default'
+                    : 'bg-amber-400 text-amber-900 hover:bg-amber-300 active:scale-95'}`}
+              >
+                {checkin.checkedInToday ? '已签到 ✓' : `签到 +${checkin.todayReward}`}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {checkinToast && (
+          <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[200] bg-amber-400 text-amber-900 font-black px-5 py-3 rounded-2xl shadow-2xl animate-fade-in">
+            🎉 {checkinToast}
           </div>
         )}
 
@@ -1681,6 +1739,14 @@ const App: React.FC = () => {
                       结构 {resultMeta.structureCorrect ? '正确' : '错误'} · 角色准确率 {resultMeta.roleAccuracy}% ({resultMeta.correctCount}/{resultMeta.totalCount})
                     </div>
                   </div>
+                  {pointsInfo && (
+                    <div className="text-right shrink-0">
+                      <div className="text-3xl font-black text-amber-300 leading-none">+{pointsInfo.earned}</div>
+                      <div className="text-[10px] font-bold uppercase opacity-80 mt-0.5">积分</div>
+                      {pointsInfo.perfect && <div className="text-[10px] font-bold text-amber-200">⭐ 完美 ×1.5</div>}
+                      {pointsInfo.milestoneBonus > 0 && <div className="text-[10px] font-bold text-amber-200">🎯 里程碑 +{pointsInfo.milestoneBonus}</div>}
+                    </div>
+                  )}
                 </div>
               </div>
 

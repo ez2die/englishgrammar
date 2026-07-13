@@ -47,15 +47,17 @@ function initDB() {
             else console.log('[DB] Practice History table ready.');
         });
 
-        // Points: running total on users (migration is idempotent — duplicate
-        // column error just means it already exists).
-        db.run(`ALTER TABLE users ADD COLUMN total_points INTEGER NOT NULL DEFAULT 0`, (err) => {
-            if (err && !/duplicate column/i.test(err.message)) {
-                console.error('[DB] Error adding total_points column:', err);
-            }
+        // Points + daily check-in columns on users (idempotent migrations —
+        // a "duplicate column" error just means it already exists).
+        const addColumn = (sql) => db.run(sql, (err) => {
+            if (err && !/duplicate column/i.test(err.message)) console.error('[DB] migration error:', err.message);
         });
+        addColumn(`ALTER TABLE users ADD COLUMN total_points INTEGER NOT NULL DEFAULT 0`);
+        addColumn(`ALTER TABLE users ADD COLUMN last_checkin_date TEXT`);
+        addColumn(`ALTER TABLE users ADD COLUMN checkin_streak INTEGER NOT NULL DEFAULT 0`);
 
         // Points ledger: one row per award, auditable breakdown.
+        // `source` distinguishes 'practice' vs 'checkin' awards.
         db.run(`CREATE TABLE IF NOT EXISTS points_ledger (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
@@ -65,11 +67,16 @@ function initDB() {
       level TEXT,
       perfect INTEGER NOT NULL DEFAULT 0,
       milestone_bonus INTEGER NOT NULL DEFAULT 0,
+      source TEXT NOT NULL DEFAULT 'practice',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(user_id) REFERENCES users(id)
     )`, (err) => {
             if (err) console.error('[DB] Error creating points_ledger table:', err);
-            else console.log('[DB] Points ledger table ready.');
+            else {
+                console.log('[DB] Points ledger table ready.');
+                // Existing ledger tables (created before `source`) get the column here.
+                addColumn(`ALTER TABLE points_ledger ADD COLUMN source TEXT NOT NULL DEFAULT 'practice'`);
+            }
         });
     });
 }

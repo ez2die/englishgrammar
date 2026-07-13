@@ -12,6 +12,15 @@ const PERFECT_MULTIPLIER = 1.5;   // all roles + structure correct
 const MILESTONE_EVERY = 10;       // every N-th practice ...
 const MILESTONE_BONUS = 25;       // ... earns a flat bonus
 
+// ---- Daily check-in ----
+// Once per calendar day (server local date). Consecutive days grow the reward.
+const CHECKIN_BASE = 5;
+const CHECKIN_STREAK_STEP = 3;   // +3 per extra consecutive day ...
+const CHECKIN_STREAK_CAP = 5;    // ... capped after 6 days (day6+ = 20)
+function checkinReward(streak) {
+    return CHECKIN_BASE + Math.min(Math.max(streak - 1, 0), CHECKIN_STREAK_CAP) * CHECKIN_STREAK_STEP;
+}
+
 function computePoints(level, correctCount, totalCount, structureCorrect) {
     const base = LEVEL_BASE[level] ?? LEVEL_BASE.Basic;
     const total = Number.isFinite(totalCount) ? Math.max(0, Math.min(Math.floor(totalCount), 500)) : 0;
@@ -153,6 +162,76 @@ router.get('/stats', authenticateToken, (req, res) => {
                 totalPoints: err2 || !urow ? 0 : (urow.total_points || 0),
             });
         });
+    });
+});
+
+// GET /api/user/checkin — today's status + reward preview
+router.get('/checkin', authenticateToken, (req, res) => {
+    const sql = `SELECT last_checkin_date, checkin_streak, total_points,
+                    date('now','localtime') AS today,
+                    date('now','localtime','-1 day') AS yesterday
+                 FROM users WHERE id = ?`;
+    db.get(sql, [req.user.id], (err, row) => {
+        if (err || !row) {
+            console.error('[user] checkin status error:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        const checkedInToday = row.last_checkin_date === row.today;
+        const streak = row.checkin_streak || 0;
+        const nextStreak = checkedInToday ? streak : (row.last_checkin_date === row.yesterday ? streak + 1 : 1);
+        res.json({
+            checkedInToday,
+            streak,
+            nextStreak,
+            todayReward: checkedInToday ? 0 : checkinReward(nextStreak),
+            totalPoints: row.total_points || 0,
+        });
+    });
+});
+
+// POST /api/user/checkin — perform today's check-in (idempotent per day)
+router.post('/checkin', authenticateToken, (req, res) => {
+    const userId = req.user.id;
+    const sql = `SELECT last_checkin_date, checkin_streak, total_points,
+                    date('now','localtime') AS today,
+                    date('now','localtime','-1 day') AS yesterday
+                 FROM users WHERE id = ?`;
+    db.get(sql, [userId], (err, row) => {
+        if (err || !row) {
+            console.error('[user] checkin read error:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        if (row.last_checkin_date === row.today) {
+            return res.json({ alreadyCheckedIn: true, streak: row.checkin_streak || 0, earned: 0, totalPoints: row.total_points || 0 });
+        }
+        const newStreak = row.last_checkin_date === row.yesterday ? (row.checkin_streak || 0) + 1 : 1;
+        const earned = checkinReward(newStreak);
+
+        db.run(
+            'UPDATE users SET last_checkin_date = ?, checkin_streak = ?, total_points = total_points + ? WHERE id = ?',
+            [row.today, newStreak, earned, userId],
+            (err2) => {
+                if (err2) {
+                    console.error('[user] checkin update error:', err2);
+                    return res.status(500).json({ error: 'Failed to check in' });
+                }
+                db.run(
+                    `INSERT INTO points_ledger (user_id, points, base_points, accuracy_pct, level, perfect, milestone_bonus, source)
+           VALUES (?, ?, ?, 0, NULL, 0, ?, 'checkin')`,
+                    [userId, earned, CHECKIN_BASE, earned - CHECKIN_BASE],
+                    (err3) => {
+                        if (err3) console.error('[user] checkin ledger error:', err3);
+                        res.json({
+                            alreadyCheckedIn: false,
+                            streak: newStreak,
+                            earned,
+                            streakBonus: earned - CHECKIN_BASE,
+                            totalPoints: (row.total_points || 0) + earned,
+                        });
+                    }
+                );
+            }
+        );
     });
 });
 

@@ -1749,6 +1749,32 @@ const App: React.FC = () => {
                 </div>
               </div>
 
+              {/* Translation: full sentence + per-word */}
+              {(currentData.translation || (currentData.wordTranslations && currentData.wordTranslations.length > 0)) && (
+                <div className="bg-white/15 rounded-2xl p-4 backdrop-blur-sm space-y-3">
+                  <div className="text-xs font-black uppercase opacity-80">翻译</div>
+                  {currentData.translation && (
+                    <div className="text-base font-bold flex items-start gap-2">
+                      <span>🌐</span><span>{currentData.translation}</span>
+                    </div>
+                  )}
+                  {currentData.wordTranslations && currentData.wordTranslations.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {currentData.words.map((w, idx) => {
+                        const zh = currentData.wordTranslations?.[idx];
+                        if (!zh || !zh.trim() || isPunctuation(w)) return null;
+                        return (
+                          <div key={idx} className="bg-white/20 rounded-lg px-2 py-1 text-center min-w-[3rem]">
+                            <div className="text-sm font-bold leading-tight">{w}</div>
+                            <div className="text-[11px] opacity-90 leading-tight">{zh}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Section C: Explanation */}
               <div className="bg-white/15 rounded-2xl p-4 backdrop-blur-sm">
                 <div className="text-xs font-black uppercase mb-3 opacity-80">C. Explanation</div>

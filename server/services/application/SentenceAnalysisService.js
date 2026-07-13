@@ -306,6 +306,8 @@ export class SentenceAnalysisService {
       structureType: structure,
       skeletonIndices: data.skeletonIndices || [],
       explanation: data.explanation || '',
+      translation: data.translation || '',
+      wordTranslations: Array.isArray(data.wordTranslations) ? data.wordTranslations : [],
       options: data.options || [],
       level: level,
     };

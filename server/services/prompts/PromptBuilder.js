@@ -33,6 +33,8 @@ export class PromptBuilder {
     - "structureType": One of [主谓 (SV), 主谓宾 (SVO), 主系表 (SP), 主谓双宾 (SVOO), 主谓宾宾补 (SVOC)]
     - "skeletonIndices": Array of indices for skeleton words
     - "explanation": Brief explanation in Chinese
+    - "translation": Natural fluent Chinese translation of the whole sentence
+    - "wordTranslations": Array of Chinese meanings, one per token, matching the words array index-by-index (use "" for punctuation)
     - "options": Array of role strings for UI buttons
     
     CRITICAL: Use "originalSentence" (not "sentence") and "structureType" (not "mainClauseStructure").`;
@@ -134,7 +136,9 @@ export class PromptBuilder {
     
     6. Provide a brief explanation in Chinese. Focus ONLY on (a) the sentence skeleton (main 主/谓/宾/表) and (b) any clauses or notable modifier phrases and what they modify. Do NOT enumerate articles/determiners (the, a, an) as '定语', and do NOT mention punctuation — these are not the learning point and must be omitted from the explanation.
 
-    7. Generate 'options': A list of unique strings for UI buttons. Include all used roles + 2-3 distractors.`;
+    7. Generate 'options': A list of unique strings for UI buttons. Include all used roles + 2-3 distractors.
+
+    8. Provide 'translation': a natural, fluent Chinese translation of the whole sentence. Also provide 'wordTranslations': the Chinese meaning of EACH token, aligned index-by-index with 'words' (same length). For pure punctuation tokens use an empty string "".`;
   }
 
   /**
@@ -167,6 +171,8 @@ export class PromptBuilder {
     - "structureType": One of [主谓 (SV), 主谓宾 (SVO), 主系表 (SP), 主谓双宾 (SVOO), 主谓宾宾补 (SVOC)]
     - "skeletonIndices": Array of indices for skeleton words
     - "explanation": Brief explanation in Chinese
+    - "translation": Natural fluent Chinese translation of the whole sentence
+    - "wordTranslations": Array of Chinese meanings, one per token, matching the words array index-by-index (use "" for punctuation)
     - "options": Array of role strings for UI buttons
     
     CRITICAL: Use "originalSentence" (not "sentence") and "structureType" (not "mainClauseStructure").

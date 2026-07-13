@@ -48,6 +48,10 @@ export interface SentenceAnalysisData {
   // Dynamic options for the UI
   options: string[];
   level?: DifficultyLevel; // Optional for backward compatibility
+  // Full-sentence Chinese translation
+  translation?: string;
+  // Per-word Chinese meanings, aligned index-by-index with `words`
+  wordTranslations?: string[];
 }
 
 // State for the drag-and-drop game

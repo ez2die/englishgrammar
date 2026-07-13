@@ -37,12 +37,21 @@ export function getSentenceSchema() {
         type: 'string',
         description: 'Brief explanation in Chinese explaining the skeleton and modifiers/clauses'
       },
-      options: { 
-        type: 'array', 
+      translation: {
+        type: 'string',
+        description: 'Natural, fluent Chinese translation of the whole sentence'
+      },
+      wordTranslations: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Chinese meaning of each token, corresponding index-by-index to the words array. Use an empty string "" for pure punctuation tokens.'
+      },
+      options: {
+        type: 'array',
         items: { type: 'string' },
         description: 'List of unique role strings for UI buttons, including all used roles plus 2-3 distractors'
       }
     },
-    required: ["originalSentence", "words", "wordRoles", "structureType", "skeletonIndices", "explanation", "options"]
+    required: ["originalSentence", "words", "wordRoles", "structureType", "skeletonIndices", "explanation", "translation", "wordTranslations", "options"]
   };
 }

@@ -132,7 +132,7 @@ export class PromptBuilder {
     
     5. Identify the 'skeletonIndices': The indices of the HEAD words that make up the main structure (S, V, O, etc.).
     
-    6. Provide a brief explanation in Chinese explaining the skeleton and, if applicable, identifying the clauses or modifiers.
+    6. Provide a brief explanation in Chinese. Focus ONLY on (a) the sentence skeleton (main 主/谓/宾/表) and (b) any clauses or notable modifier phrases and what they modify. Do NOT enumerate articles/determiners (the, a, an) as '定语', and do NOT mention punctuation — these are not the learning point and must be omitted from the explanation.
 
     7. Generate 'options': A list of unique strings for UI buttons. Include all used roles + 2-3 distractors.`;
   }

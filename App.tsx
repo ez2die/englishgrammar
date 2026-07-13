@@ -3,6 +3,7 @@ import { generateSentenceAnalysis, analyzeSentence } from './services/geminiServ
 import { storageService } from './services/storageService';
 import { SentenceAnalysisData, GrammarRole, SentenceStructure, DifficultyLevel, Theme } from './types';
 import { GRAMMAR_ROLES, SENTENCE_STRUCTURES, SKELETON_CONFIG } from './constants';
+import { isGraded, isRoleAcceptable } from './utils/grading';
 import WordPill from './components/WordPill';
 import ImageUploader from './components/ImageUploader';
 import { useTheme } from './contexts/ThemeContext';
@@ -520,33 +521,26 @@ const App: React.FC = () => {
   // --- Validation Helpers ---
   const getIsCorrect = (idx: number, correctRole: GrammarRole) => {
     if (!submitted) return null;
-    const userRole = assignedRoles[idx];
-    if (userRole === correctRole) return true;
-    if (!userRole && correctRole === GrammarRole.CONNECTIVE) return true;
-    return false;
+    const word = data?.words[idx] ?? '';
+    // Ungraded (punctuation / articles / connective) → neutral, never marked wrong.
+    if (!isGraded(word, correctRole)) return null;
+    return isRoleAcceptable(correctRole, assignedRoles[idx]);
   };
 
   const checkResults = () => {
     setSubmitted(true);
     setShowResult(true);
 
-    // Calculate score. Do NOT use getIsCorrect() here — it gates on `submitted`,
-    // which is still false in this render's closure (setSubmitted is async), so
-    // it would return null for every word and zero out the score.
-    const isRoleCorrect = (idx: number, correctRole: GrammarRole) => {
-      const userRole = assignedRoles[idx];
-      if (userRole === correctRole) return true;
-      if (!userRole && correctRole === GrammarRole.CONNECTIVE) return true;
-      return false;
-    };
-
+    // Calculate score with lenient grading (see utils/grading.ts): punctuation,
+    // articles/determiners and 连接词/其他 are not counted; modifier roles are
+    // interchangeable; only core skeleton roles need an exact match.
     let correctCount = 0;
     let totalCount = 0;
-    currentData.words.forEach((_, idx) => {
+    currentData.words.forEach((word, idx) => {
       const correctRole = currentData.wordRoles[idx];
-      if (correctRole !== GrammarRole.CONNECTIVE) {
+      if (isGraded(word, correctRole)) {
         totalCount++;
-        if (isRoleCorrect(idx, correctRole)) correctCount++;
+        if (isRoleAcceptable(correctRole, assignedRoles[idx])) correctCount++;
       }
     });
 
@@ -609,8 +603,8 @@ const App: React.FC = () => {
 
         // Check correctness based on whether word should be in skeleton
         let isCorrect = false;
-        if (correctRole === GrammarRole.CONNECTIVE) {
-          isCorrect = true; // Connectives are always correct (can be omitted)
+        if (!isGraded(word, correctRole)) {
+          isCorrect = true; // punctuation / articles / connectives are not graded
         } else if (isInCorrectSkeleton) {
           // Word should be in skeleton
           if (isInUserSkeleton) {
@@ -628,8 +622,8 @@ const App: React.FC = () => {
             // User incorrectly placed non-skeleton word in skeleton
             isCorrect = false;
           } else {
-            // Both not in skeleton, check role assignment
-            isCorrect = userRole === correctRole;
+            // Both not in skeleton, check role assignment (lenient)
+            isCorrect = isRoleAcceptable(correctRole, userRole);
           }
         }
 
@@ -1118,14 +1112,13 @@ const App: React.FC = () => {
     const userSkeletonSet = new Set(Object.values(skeletonSlots).flat());
     let correctCount = 0;
     let totalCount = 0;
-    currentData.words.forEach((_, idx) => {
+    currentData.words.forEach((word, idx) => {
       const correctRole = currentData.wordRoles[idx];
-      if (correctRole !== GrammarRole.CONNECTIVE) {
+      if (isGraded(word, correctRole)) {
         totalCount++;
-        const userRole = assignedRoles[idx];
         const isUserSkeleton = userSkeletonSet.has(idx);
         const isCorrectSkeleton = correctSkeletonSet.has(idx);
-        if ((isUserSkeleton && isCorrectSkeleton) || userRole === correctRole) {
+        if ((isUserSkeleton && isCorrectSkeleton) || isRoleAcceptable(correctRole, assignedRoles[idx])) {
           correctCount++;
         }
       }

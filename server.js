@@ -320,14 +320,31 @@ app.post('/api/generate', generateLimiter, async (req, res) => {
       });
     }
 
+    // L2: sample sentences already in the bank (this level, else any) so the model
+    // is told not to reproduce them — the bigger the bank, the wider the exclusion.
+    let avoidSentences = [];
+    try {
+      const bank = await readQuestions();
+      let pool = bank.filter(q => (q.level || 'Advanced') === level);
+      if (pool.length < 8) pool = bank; // small level pool → widen to whole bank
+      const sentences = pool.map(q => q.originalSentence).filter(Boolean);
+      // shuffle + take up to 12
+      for (let i = sentences.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [sentences[i], sentences[j]] = [sentences[j], sentences[i]];
+      }
+      avoidSentences = sentences.slice(0, 12);
+    } catch { /* bank read failure → no avoid list, non-fatal */ }
+
     // 使用新的SentenceAnalysisService
     const startTime = Date.now();
     const result = await sentenceAnalysisService.generateSentenceAnalysis(level, {
       preferredProvider: preferredProvider || null,
       enableFallback: true,
+      avoidSentences,
     });
     const duration = Date.now() - startTime;
-    console.log(`[API] /api/generate completed in ${duration}ms for level: ${level}`);
+    console.log(`[API] /api/generate completed in ${duration}ms for level: ${level} (avoid ${avoidSentences.length})`);
 
     res.json(result);
 

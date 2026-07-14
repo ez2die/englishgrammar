@@ -85,6 +85,10 @@ Do NOT use alternative names like "sentence" or "mainClauseStructure".`;
         temperature: opts.temperature,
         max_tokens: opts.maxTokens,
       };
+      if (opts.topP !== undefined) requestOptions.top_p = opts.topP;
+      if (opts.frequencyPenalty !== undefined) requestOptions.frequency_penalty = opts.frequencyPenalty;
+      if (opts.presencePenalty !== undefined) requestOptions.presence_penalty = opts.presencePenalty;
+      if (opts.seed !== undefined) requestOptions.seed = opts.seed;
 
       // 如果提供了schema且需要JSON格式，添加response_format
       if (opts.schema && opts.responseFormat === 'json') {

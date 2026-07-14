@@ -9,6 +9,32 @@ import { getIntermediateLevelInstruction } from "./templates/intermediate.js";
 import { getAdvancedLevelInstruction } from "./templates/advanced.js";
 import { getSentenceSchema } from "./schemas/sentenceSchema.js";
 
+// --- Content-diversity pools (L1): randomizing the CONTENT constraint each call
+// pushes the model off its high-frequency "textbook" attractor sentences. ---
+const THEMES = [
+  'space and planets', 'the ocean and sea life', 'sports and games', 'cooking and food',
+  'animals and pets', 'music and instruments', 'school and learning', 'nature and forests',
+  'travel and adventure', 'science and inventions', 'art and painting', 'weather and seasons',
+  'festivals and holidays', 'robots and technology', 'friendship and family', 'dinosaurs',
+  'gardening and plants', 'the city and streets', 'the circus', 'outer-space explorers',
+  'farms and countryside', 'the library', 'mountains and hiking', 'rivers and boats',
+];
+const SUBJECTS = [
+  'a curious child', 'a brave firefighter', 'a clever fox', 'an old fisherman',
+  'a young pianist', 'a busy chef', 'a tiny robot', 'a wise owl', 'a friendly astronaut',
+  'twin sisters', 'a soccer player', 'a painter', 'a scientist', 'a farmer', 'a puppy',
+  'a group of students', 'a gardener', 'a train driver', 'a baker', 'a diver',
+  'a mountain climber', 'a street musician', 'a librarian', 'a nurse',
+];
+const SETTINGS = [
+  'in a busy market', 'on a snowy mountain', 'under the sea', 'at the science fair',
+  'during a thunderstorm', 'in a quiet library', 'on a spaceship', 'at the beach',
+  'in the kitchen', 'at the zoo', 'in an old castle', 'by a calm river',
+  'in a green garden', 'at a train station', 'in a dark cave', 'on a farm at dawn',
+  'in a crowded stadium', 'inside a rocket', 'at a bakery', 'in a rainforest',
+];
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
 export class PromptBuilder {
   /**
    * 构建完整的Prompt
@@ -16,12 +42,23 @@ export class PromptBuilder {
    * @param {object} context - 上下文信息（可选）
    * @returns {string} 完整的Prompt字符串
    */
+  /** L1: a fresh random content directive so each generation differs. */
+  pickDiversity() {
+    const theme = pick(THEMES);
+    const subject = pick(SUBJECTS);
+    const setting = pick(SETTINGS);
+    return `For VARIETY, make this a fresh, ORIGINAL sentence: theme = "${theme}"; feature a subject such as "${subject}"; set it ${setting}. Use vivid, specific vocabulary. Do NOT reuse clichéd textbook sentences (e.g. "the cat sat on the mat", "the quick brown fox", "the young scientist observed..."). Vary the wording and rhythm from typical examples.`;
+  }
+
   buildPrompt(level, context = {}) {
     const levelInstruction = this.getLevelInstruction(level);
     const analysisRules = this.getAnalysisRules();
-    
+    const diversity = context.diversity || this.pickDiversity();
+
     let prompt = `${levelInstruction}
-    
+
+    ${diversity}
+
     Then, analyze this sentence structure focusing on "Skeleton vs. Modifiers vs. Clauses".
     
     ${analysisRules}
@@ -39,9 +76,15 @@ export class PromptBuilder {
     
     CRITICAL: Use "originalSentence" (not "sentence") and "structureType" (not "mainClauseStructure").`;
 
-    // 如果有之前的句子，添加避免重复的提示
-    if (context.previousSentence) {
-      prompt = `Avoid generating the same sentence as: "${context.previousSentence}"\n\n${prompt}`;
+    // L2: 排除表 —— 已见过/题库里的句子,禁止生成它们或近似句。
+    const avoid = [];
+    if (context.previousSentence) avoid.push(context.previousSentence);
+    if (Array.isArray(context.avoidSentences)) avoid.push(...context.avoidSentences);
+    const seen = new Set();
+    const uniq = avoid.filter((s) => typeof s === 'string' && s.trim() && !seen.has(s) && seen.add(s)).slice(0, 15);
+    if (uniq.length) {
+      const list = uniq.map((s) => `- "${s}"`).join('\n');
+      prompt = `Do NOT generate any of the following sentences, or a close variation (same subject + verb, or only tiny word swaps):\n${list}\n\n${prompt}`;
     }
 
     return prompt;

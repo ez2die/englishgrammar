@@ -36,6 +36,11 @@ export class GenerateOptions {
     this.schema = options.schema; // JSON Schema for structured output
     this.systemPrompt = options.systemPrompt; // System prompt for OpenAI-compatible APIs
     this.timeout = options.timeout ?? 30000; // 30 seconds default
+    // Sampling controls (used to diversify generated questions; all optional)
+    this.topP = options.topP;
+    this.frequencyPenalty = options.frequencyPenalty;
+    this.presencePenalty = options.presencePenalty;
+    this.seed = options.seed;
   }
 }
 

@@ -162,19 +162,24 @@ export class SentenceAnalysisService {
       enableFallback = true,
       fallbackProviders = null,
       previousSentence = null,
+      avoidSentences = null,
     } = options;
 
-    // 构建Prompt
-    const prompt = this.promptBuilder.buildPrompt(level, { previousSentence });
+    // 构建Prompt（含 L1 多样性注入 + L2 排除表）
+    const prompt = this.promptBuilder.buildPrompt(level, { previousSentence, avoidSentences });
     const schema = this.promptBuilder.getSchema();
     const systemPrompt = this.promptBuilder.getSystemPrompt();
 
-    // 准备生成选项（包含 system prompt - 最佳实践）
+    // 生成选项：L3 采样 —— 提高温度 + 频率/存在惩罚 + 随机 seed 以降低重复
     const generateOptions = {
       responseFormat: 'json',
       schema: schema,
-      systemPrompt: systemPrompt, // 添加 system prompt
-      temperature: 0.7,
+      systemPrompt: systemPrompt,
+      temperature: 0.9,
+      topP: 0.95,
+      frequencyPenalty: 0.5,
+      presencePenalty: 0.5,
+      seed: Math.floor(Math.random() * 1e9),
       maxTokens: 3000,
     };
 

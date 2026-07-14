@@ -1,6 +1,7 @@
 import express from 'express';
 import { db } from '../db/database.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { evaluateStars, getStarmap } from '../services/achievements/evaluate.js';
 
 const router = express.Router();
 
@@ -97,12 +98,13 @@ router.post('/history', authenticateToken, (req, res) => {
         }
     }
 
+    const structCorrect = typeof structure_correct === 'boolean' ? (structure_correct ? 1 : 0) : null;
     const insertSql = `
-    INSERT INTO practice_history (user_id, sentence, structure_type, score, analysis_snapshot)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO practice_history (user_id, sentence, structure_type, score, analysis_snapshot, structure_correct)
+    VALUES (?, ?, ?, ?, ?, ?)
   `;
 
-    db.run(insertSql, [userId, sentence, structure_type ?? null, scoreNum, snapshotStr], function (err) {
+    db.run(insertSql, [userId, sentence, structure_type ?? null, scoreNum, snapshotStr, structCorrect], function (err) {
         if (err) {
             console.error('[user] history save error:', err);
             return res.status(500).json({ error: 'Failed to save history' });
@@ -116,6 +118,7 @@ router.post('/history', authenticateToken, (req, res) => {
         }
 
         const p = computePoints(level, correct_count, total_count, structure_correct);
+        const nowHour = new Date().getHours();
 
         // Quantity dimension: flat bonus on every N-th completed practice.
         db.get('SELECT COUNT(*) AS c FROM practice_history WHERE user_id = ?', [userId], (err2, row) => {
@@ -137,19 +140,31 @@ router.post('/history', authenticateToken, (req, res) => {
                     db.run('UPDATE users SET total_points = total_points + ? WHERE id = ?', [totalEarned, userId], (err4) => {
                         if (err4) console.error('[user] total_points update error:', err4);
 
-                        db.get('SELECT total_points FROM users WHERE id = ?', [userId], (err5, urow) => {
-                            res.status(201).json({
-                                message: 'History saved',
-                                id: historyId,
-                                points: {
-                                    earned: totalEarned,
-                                    base: p.base,
-                                    accuracyPct: p.accuracyPct,
-                                    perfect: p.perfect,
-                                    milestoneBonus,
-                                    practiceCount,
-                                    total: err5 || !urow ? null : urow.total_points,
-                                },
+                        // Maintain perfect-streak counters, then evaluate achievements.
+                        db.run('UPDATE users SET cur_perfect_streak = CASE WHEN ? = 1 THEN cur_perfect_streak + 1 ELSE 0 END WHERE id = ?', [p.perfect ? 1 : 0, userId], () => {
+                            db.run('UPDATE users SET max_perfect_streak = MAX(max_perfect_streak, cur_perfect_streak) WHERE id = ?', [userId], () => {
+                                evaluateStars(userId, { nowHour })
+                                    .catch((e) => { console.error('[user] evaluateStars error:', e); return { newlyLit: [], newTitles: [] }; })
+                                    .then((ach) => {
+                                        const a = ach || { newlyLit: [], newTitles: [] };
+                                        db.get('SELECT total_points FROM users WHERE id = ?', [userId], (err5, urow) => {
+                                            res.status(201).json({
+                                                message: 'History saved',
+                                                id: historyId,
+                                                points: {
+                                                    earned: totalEarned,
+                                                    base: p.base,
+                                                    accuracyPct: p.accuracyPct,
+                                                    perfect: p.perfect,
+                                                    milestoneBonus,
+                                                    practiceCount,
+                                                    total: err5 || !urow ? null : urow.total_points,
+                                                },
+                                                newlyLit: a.newlyLit,
+                                                newTitles: a.newTitles,
+                                            });
+                                        });
+                                    });
                             });
                         });
                     });
@@ -227,8 +242,8 @@ router.post('/checkin', authenticateToken, (req, res) => {
         const earned = checkinReward(newStreak);
 
         db.run(
-            'UPDATE users SET last_checkin_date = ?, checkin_streak = ?, total_points = total_points + ? WHERE id = ?',
-            [row.today, newStreak, earned, userId],
+            'UPDATE users SET last_checkin_date = ?, checkin_streak = ?, max_checkin_streak = MAX(max_checkin_streak, ?), total_points = total_points + ? WHERE id = ?',
+            [row.today, newStreak, newStreak, earned, userId],
             (err2) => {
                 if (err2) {
                     console.error('[user] checkin update error:', err2);
@@ -240,13 +255,22 @@ router.post('/checkin', authenticateToken, (req, res) => {
                     [userId, earned, CHECKIN_BASE, earned - CHECKIN_BASE],
                     (err3) => {
                         if (err3) console.error('[user] checkin ledger error:', err3);
-                        res.json({
-                            alreadyCheckedIn: false,
-                            streak: newStreak,
-                            earned,
-                            streakBonus: earned - CHECKIN_BASE,
-                            totalPoints: (row.total_points || 0) + earned,
-                        });
+                        evaluateStars(userId, {})
+                            .catch((e) => { console.error('[user] evaluateStars error:', e); return { newlyLit: [], newTitles: [] }; })
+                            .then((ach) => {
+                                const a = ach || { newlyLit: [], newTitles: [] };
+                                db.get('SELECT total_points FROM users WHERE id = ?', [userId], (e5, urow) => {
+                                    res.json({
+                                        alreadyCheckedIn: false,
+                                        streak: newStreak,
+                                        earned,
+                                        streakBonus: earned - CHECKIN_BASE,
+                                        totalPoints: e5 || !urow ? (row.total_points || 0) + earned : urow.total_points,
+                                        newlyLit: a.newlyLit,
+                                        newTitles: a.newTitles,
+                                    });
+                                });
+                            });
                     }
                 );
             }
@@ -274,6 +298,49 @@ router.get('/points', authenticateToken, (req, res) => {
                 res.json({ totalPoints: urow?.total_points || 0, ledger: rows });
             }
         );
+    });
+});
+
+// GET /api/user/starmap — full achievement catalog + user progress.
+// Lazily backfills (re-evaluates) so past activity retroactively lights stars.
+router.get('/starmap', authenticateToken, async (req, res) => {
+    try {
+        await evaluateStars(req.user.id, {});
+        const map = await getStarmap(req.user.id);
+        res.json(map);
+    } catch (e) {
+        console.error('[user] starmap error:', e);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// POST /api/user/flag — set an exploration flag (ocr | custom | theme) then re-evaluate.
+router.post('/flag', authenticateToken, (req, res) => {
+    const cols = { ocr: 'used_ocr', custom: 'used_custom', theme: 'changed_theme' };
+    const col = cols[(req.body || {}).name];
+    if (!col) return res.status(400).json({ error: 'Invalid flag' });
+    db.run(`UPDATE users SET ${col} = 1 WHERE id = ?`, [req.user.id], (err) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        evaluateStars(req.user.id, {})
+            .catch(() => ({ newlyLit: [], newTitles: [] }))
+            .then((a) => res.json({ ok: true, newlyLit: a.newlyLit, newTitles: a.newTitles }));
+    });
+});
+
+// POST /api/user/title — wear an owned title (or null to clear).
+router.post('/title', authenticateToken, (req, res) => {
+    const titleKey = (req.body || {}).titleKey;
+    if (titleKey === null || titleKey === '') {
+        return db.run('UPDATE users SET active_title = NULL WHERE id = ?', [req.user.id], () => res.json({ ok: true, activeTitle: null }));
+    }
+    if (typeof titleKey !== 'string') return res.status(400).json({ error: 'Invalid titleKey' });
+    db.get('SELECT 1 FROM user_titles WHERE user_id = ? AND title_key = ?', [req.user.id, titleKey], (err, row) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (!row) return res.status(403).json({ error: 'Title not owned' });
+        db.run('UPDATE users SET active_title = ? WHERE id = ?', [titleKey, req.user.id], (e2) => {
+            if (e2) return res.status(500).json({ error: 'Database error' });
+            res.json({ ok: true, activeTitle: titleKey });
+        });
     });
 });
 

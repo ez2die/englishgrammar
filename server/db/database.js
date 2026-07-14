@@ -56,6 +56,34 @@ function initDB() {
         addColumn(`ALTER TABLE users ADD COLUMN last_checkin_date TEXT`);
         addColumn(`ALTER TABLE users ADD COLUMN checkin_streak INTEGER NOT NULL DEFAULT 0`);
 
+        // Achievement ("星图") columns + practice_history flag.
+        addColumn(`ALTER TABLE users ADD COLUMN active_title TEXT`);
+        addColumn(`ALTER TABLE users ADD COLUMN max_checkin_streak INTEGER NOT NULL DEFAULT 0`);
+        addColumn(`ALTER TABLE users ADD COLUMN cur_perfect_streak INTEGER NOT NULL DEFAULT 0`);
+        addColumn(`ALTER TABLE users ADD COLUMN max_perfect_streak INTEGER NOT NULL DEFAULT 0`);
+        addColumn(`ALTER TABLE users ADD COLUMN used_ocr INTEGER NOT NULL DEFAULT 0`);
+        addColumn(`ALTER TABLE users ADD COLUMN used_custom INTEGER NOT NULL DEFAULT 0`);
+        addColumn(`ALTER TABLE users ADD COLUMN changed_theme INTEGER NOT NULL DEFAULT 0`);
+        addColumn(`ALTER TABLE practice_history ADD COLUMN structure_correct INTEGER`);
+
+        // Achievement tables: lit stars + earned titles (unique = idempotent awards).
+        db.run(`CREATE TABLE IF NOT EXISTS user_stars (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      star_key TEXT NOT NULL,
+      lit_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, star_key),
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    )`, (err) => { if (err) console.error('[DB] Error creating user_stars table:', err); });
+        db.run(`CREATE TABLE IF NOT EXISTS user_titles (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      title_key TEXT NOT NULL,
+      earned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, title_key),
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    )`, (err) => { if (err) console.error('[DB] Error creating user_titles table:', err); });
+
         // Points ledger: one row per award, auditable breakdown.
         // `source` distinguishes 'practice' vs 'checkin' awards.
         db.run(`CREATE TABLE IF NOT EXISTS points_ledger (

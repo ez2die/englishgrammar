@@ -314,9 +314,11 @@ router.get('/starmap', authenticateToken, async (req, res) => {
     }
 });
 
-// POST /api/user/flag — set an exploration flag (ocr | custom | theme) then re-evaluate.
+// POST /api/user/flag — client-only exploration signal. Only 'theme' is accepted:
+// 'ocr'/'custom' are set server-side by the endpoints that actually perform them
+// (see server.js), so they can't be self-reported for free points.
 router.post('/flag', authenticateToken, (req, res) => {
-    const cols = { ocr: 'used_ocr', custom: 'used_custom', theme: 'changed_theme' };
+    const cols = { theme: 'changed_theme' };
     const col = cols[(req.body || {}).name];
     if (!col) return res.status(400).json({ error: 'Invalid flag' });
     db.run(`UPDATE users SET ${col} = 1 WHERE id = ?`, [req.user.id], (err) => {

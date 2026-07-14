@@ -19,6 +19,8 @@ import { SentenceAnalysisService } from './server/services/application/SentenceA
 // Database, config, middleware, routes
 import { initDB } from './server/db/database.js';
 import { ALLOWED_ORIGINS, TRUST_PROXY } from './server/config/env.js';
+import { optionalAuth } from './server/middleware/optionalAuth.js';
+import { markExploration } from './server/services/achievements/evaluate.js';
 import authRoutes from './server/routes/auth.js';
 import userRoutes from './server/routes/user.js';
 
@@ -385,7 +387,7 @@ app.post('/api/generate', generateLimiter, async (req, res) => {
 });
 
 // POST /api/analyze-sentence - Analyze custom sentence from OCR (添加限流保护)
-app.post('/api/analyze-sentence', generateLimiter, async (req, res) => {
+app.post('/api/analyze-sentence', generateLimiter, optionalAuth, async (req, res) => {
   try {
     const { sentence, level } = req.body;
 
@@ -419,6 +421,9 @@ app.post('/api/analyze-sentence', generateLimiter, async (req, res) => {
     );
     const duration = Date.now() - startTime;
     console.log(`[API] /api/analyze-sentence completed in ${duration}ms for sentence: "${sentence.substring(0, 50)}..."`);
+
+    // Credit the "自定义大师" exploration star server-side (fire-and-forget).
+    if (req.user) markExploration(req.user.id, 'custom').catch(() => { });
 
     res.json(result);
 
@@ -475,7 +480,7 @@ app.post('/api/analyze-sentence', generateLimiter, async (req, res) => {
 });
 
 // POST /api/ocr-normalize - Normalize OCR text to a clean sentence
-app.post('/api/ocr-normalize', generateLimiter, async (req, res) => {
+app.post('/api/ocr-normalize', generateLimiter, optionalAuth, async (req, res) => {
   try {
     const { sentence } = req.body;
 
@@ -500,6 +505,9 @@ app.post('/api/ocr-normalize', generateLimiter, async (req, res) => {
     });
     const duration = Date.now() - startTime;
     console.log(`[API] /api/ocr-normalize completed in ${duration}ms`);
+
+    // Credit the "火眼金睛" (OCR) exploration star server-side (fire-and-forget).
+    if (req.user) markExploration(req.user.id, 'ocr').catch(() => { });
 
     res.json({ sentence: normalized });
 

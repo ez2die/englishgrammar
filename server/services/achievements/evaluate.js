@@ -75,11 +75,22 @@ export async function evaluateStars(userId, ctx = {}) {
     if (ins.changes === 1) {
       const pts = starPoints(star);
       if (pts > 0) {
-        await run(
-          "INSERT INTO points_ledger(user_id, points, base_points, accuracy_pct, level, perfect, milestone_bonus, source) VALUES (?, ?, ?, 0, NULL, 0, 0, 'achievement')",
-          [userId, pts, pts]
-        );
-        await run('UPDATE users SET total_points = total_points + ? WHERE id = ?', [pts, userId]);
+        // The UNIQUE(user_id,star_key) insert above is the single source of truth
+        // and prevents double-awards even under concurrent requests. The point
+        // credit is two more statements; on the (rare) chance they fail after the
+        // star is lit we log a reconcilable PARTIAL AWARD rather than a hard error.
+        // (A single-connection sqlite transaction is intentionally NOT used here —
+        // other endpoints share the connection and would be captured by an open
+        // BEGIN across awaits. True ACID would need a dedicated write connection.)
+        try {
+          await run(
+            "INSERT INTO points_ledger(user_id, points, base_points, accuracy_pct, level, perfect, milestone_bonus, source) VALUES (?, ?, ?, 0, NULL, 0, 0, 'achievement')",
+            [userId, pts, pts]
+          );
+          await run('UPDATE users SET total_points = total_points + ? WHERE id = ?', [pts, userId]);
+        } catch (e) {
+          console.error(`[achievements] PARTIAL AWARD: star ${star.key} lit for user ${userId} but ${pts} pts not credited:`, e.message);
+        }
       }
       lit.add(star.key);
       newlyLit.push({ key: star.key, title: star.title, rarity: star.rarity, points: pts });
@@ -105,6 +116,19 @@ export async function evaluateStars(userId, ctx = {}) {
   }
 
   return { newlyLit, newTitles };
+}
+
+/**
+ * 服务端置位探索埋点(ocr / custom / theme)并重新判定。
+ * 由真正发生该行为的接口调用(如 /api/ocr-normalize、/api/analyze-sentence),
+ * 避免客户端自报刷分。
+ */
+export async function markExploration(userId, flag) {
+  const cols = { ocr: 'used_ocr', custom: 'used_custom', theme: 'changed_theme' };
+  const col = cols[flag];
+  if (!col) return { newlyLit: [], newTitles: [] };
+  await run(`UPDATE users SET ${col} = 1 WHERE id = ?`, [userId]);
+  return evaluateStars(userId, {});
 }
 
 /** 组装整册 + 用户进度(GET /api/user/starmap 使用) */

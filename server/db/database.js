@@ -84,6 +84,10 @@ function initDB() {
       FOREIGN KEY(user_id) REFERENCES users(id)
     )`, (err) => { if (err) console.error('[DB] Error creating user_titles table:', err); });
 
+        // Indexes for the per-request achievement metric aggregates (avoid full scans).
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ph_user ON practice_history(user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_pl_user_src ON points_ledger(user_id, source)`);
+
         // Points ledger: one row per award, auditable breakdown.
         // `source` distinguishes 'practice' vs 'checkin' awards.
         db.run(`CREATE TABLE IF NOT EXISTS points_ledger (

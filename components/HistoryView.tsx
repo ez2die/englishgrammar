@@ -20,6 +20,8 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onClose }) => {
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<{ totalPractices: number; averageScore: number; totalPoints?: number } | null>(null);
     const [activeTab, setActiveTab] = useState<'activity' | 'profile'>('activity');
+    const [detail, setDetail] = useState<any | null>(null);
+    const [detailLoading, setDetailLoading] = useState(false);
 
     const { token, user, logout } = useAuth();
     const { theme } = useTheme();
@@ -62,7 +64,116 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onClose }) => {
         });
     };
 
+    const openDetail = async (id: number) => {
+        if (!token) return;
+        setDetailLoading(true);
+        setDetail(null);
+        try {
+            const res = await fetch(`/api/user/history/${id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) setDetail(await res.json());
+        } catch (e) {
+            console.error('Failed to load detail:', e);
+        } finally {
+            setDetailLoading(false);
+        }
+    };
+
     const isFresh = theme === 'fresh';
+
+    const roleChipClass = (role?: string) => {
+        switch (role) {
+            case '定语': return 'bg-blue-100 text-blue-700';
+            case '状语': return 'bg-purple-100 text-purple-700';
+            case '定语从句': return 'bg-cyan-100 text-cyan-700';
+            case '状语从句': return 'bg-indigo-100 text-indigo-700';
+            case '连接词/其他': return 'bg-gray-100 text-gray-500';
+            default: return 'bg-emerald-100 text-emerald-700'; // core skeleton roles
+        }
+    };
+
+    const renderDetail = () => {
+        const s = detail?.analysis_snapshot;
+        const wrong = new Map<number, string>();
+        (s?.errors?.words || []).forEach((e: any) => wrong.set(e.wordIndex, e.userRole));
+        const sm = s?.errors?.summary;
+        const st = s?.errors?.structure;
+        return (
+            <div className="space-y-4">
+                <button
+                    onClick={() => setDetail(null)}
+                    className={`text-sm font-bold ${isFresh ? 'text-emerald-600' : 'text-purple-600'} hover:opacity-70`}
+                >
+                    ← 返回列表
+                </button>
+
+                <div className="bg-white rounded-2xl p-4 border-2 border-gray-100 shadow-sm">
+                    <div className="text-lg font-black text-gray-800 mb-1">{detail.sentence}</div>
+                    <div className="text-xs text-gray-400 font-medium">{formatDate(detail.created_at)}</div>
+                </div>
+
+                {!s ? (
+                    <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                        这条记录没有详细快照
+                    </div>
+                ) : (
+                    <>
+                        {/* Summary */}
+                        <div className="flex flex-wrap gap-2">
+                            <span className={`px-3 py-1.5 rounded-xl text-sm font-black ${sm?.fullyCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                角色准确率 {sm?.accuracy ?? 0}% ({sm?.correctWords ?? 0}/{sm?.totalWords ?? 0})
+                            </span>
+                            <span className={`px-3 py-1.5 rounded-xl text-sm font-black ${sm?.structureCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                                结构 {sm?.structureCorrect ? '正确' : '错误'}
+                            </span>
+                        </div>
+
+                        {/* Structure */}
+                        {st && (
+                            <div className="bg-white rounded-2xl p-4 border-2 border-gray-100 shadow-sm">
+                                <div className="text-xs font-black uppercase text-gray-400 mb-2">句子结构</div>
+                                <div className="flex items-center gap-2 text-sm">
+                                    <span className="text-gray-500">你的选择:</span>
+                                    <span className={`px-2 py-0.5 rounded-md font-bold ${st.correct ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                                        {st.userStructure || '未选'}
+                                    </span>
+                                    {!st.correct && (
+                                        <>
+                                            <span className="text-gray-400">→ 正确:</span>
+                                            <span className="px-2 py-0.5 rounded-md font-bold bg-emerald-100 text-emerald-700">{st.correctStructure}</span>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Word breakdown */}
+                        <div className="bg-white rounded-2xl p-4 border-2 border-gray-100 shadow-sm">
+                            <div className="text-xs font-black uppercase text-gray-400 mb-3">逐词解析(红色为你答错的)</div>
+                            <div className="flex flex-wrap gap-2">
+                                {(s.words || []).map((w: string, idx: number) => {
+                                    const correct = s.roles?.[idx];
+                                    const isWrong = wrong.has(idx);
+                                    return (
+                                        <div key={idx} className={`rounded-lg px-2 py-1 text-center border ${isWrong ? 'border-rose-300 bg-rose-50' : 'border-gray-100'}`}>
+                                            <div className="text-sm font-bold text-gray-800 leading-tight">{w}</div>
+                                            <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5 ${roleChipClass(correct)}`}>{correct}</div>
+                                            {isWrong && (
+                                                <div className="text-[10px] font-bold text-rose-500 mt-0.5 line-through">
+                                                    你: {wrong.get(idx) || '未填'}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </>
+                )}
+            </div>
+        );
+    };
 
     return (
         <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
@@ -123,6 +234,9 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onClose }) => {
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-6 bg-gray-50/50">
                     {activeTab === 'activity' ? (
+                        detailLoading ? (
+                            <div className="text-center py-10 text-gray-400">Loading detail...</div>
+                        ) : detail ? renderDetail() : (
                         <>
                             {loading ? (
                                 <div className="text-center py-10 text-gray-400">Loading history...</div>
@@ -133,7 +247,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onClose }) => {
                             ) : (
                                 <div className="space-y-3">
                                     {history.map(record => (
-                                        <div key={record.id} className="bg-white border-2 border-gray-100 rounded-xl p-4 hover:border-gray-200 transition-colors shadow-sm">
+                                        <div key={record.id} onClick={() => openDetail(record.id)} className="bg-white border-2 border-gray-100 rounded-xl p-4 hover:border-gray-200 hover:shadow-md transition-all shadow-sm cursor-pointer active:scale-[0.99]">
                                             <div className="flex justify-between items-start mb-2">
                                                 <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase ${record.score === 100
                                                     ? (isFresh ? 'bg-emerald-100 text-emerald-700' : 'bg-green-100 text-green-700')
@@ -163,6 +277,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onClose }) => {
                                 </div>
                             )}
                         </>
+                        )
                     ) : (
                         <div className="space-y-6">
                             {/* Profile Settings Content */}

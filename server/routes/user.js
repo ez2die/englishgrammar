@@ -55,6 +55,25 @@ router.get('/history', authenticateToken, (req, res) => {
     });
 });
 
+// GET /api/user/history/:id — full record incl. parsed analysis snapshot (own rows only)
+router.get('/history/:id', authenticateToken, (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: 'Invalid id' });
+
+    const sql = `SELECT id, sentence, structure_type, score, analysis_snapshot, created_at
+                 FROM practice_history WHERE id = ? AND user_id = ?`;
+    db.get(sql, [id, req.user.id], (err, row) => {
+        if (err) {
+            console.error('[user] history detail error:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        if (!row) return res.status(404).json({ error: 'Not found' });
+        let snapshot = null;
+        try { snapshot = row.analysis_snapshot ? JSON.parse(row.analysis_snapshot) : null; } catch { /* leave null */ }
+        res.json({ ...row, analysis_snapshot: snapshot });
+    });
+});
+
 // POST /api/user/history
 // Saves the practice record AND awards points computed server-side from the
 // submitted result details (level / correct_count / total_count / structure_correct).

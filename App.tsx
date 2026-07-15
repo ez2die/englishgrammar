@@ -5,6 +5,7 @@ import { SentenceAnalysisData, GrammarRole, SentenceStructure, DifficultyLevel, 
 import { GRAMMAR_ROLES, SENTENCE_STRUCTURES, SKELETON_CONFIG } from './constants';
 import { isGraded, isRoleAcceptable } from './utils/grading';
 import StarMap from './components/StarMap';
+import StarUnlockCelebration, { CelebrationItem } from './components/StarUnlockCelebration';
 import WordPill from './components/WordPill';
 import ImageUploader from './components/ImageUploader';
 import { useTheme } from './contexts/ThemeContext';
@@ -48,6 +49,15 @@ const App: React.FC = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showStarMap, setShowStarMap] = useState(false);
+  const [celebrations, setCelebrations] = useState<CelebrationItem[]>([]);
+
+  // Turn a /history or /checkin response's newlyLit/newTitles into a celebration queue.
+  const enqueueCelebration = (newlyLit?: any[], newTitles?: any[]) => {
+    const items: CelebrationItem[] = [];
+    (newlyLit || []).forEach((s: any) => items.push({ kind: 'star', key: s.key, title: s.title, rarity: s.rarity, points: s.points }));
+    (newTitles || []).forEach((t: any) => items.push({ kind: 'title', name: t.name }));
+    if (items.length) setCelebrations(items);
+  };
   const { user, isAuthenticated, token } = useAuth();
 
 
@@ -282,6 +292,7 @@ const App: React.FC = () => {
         setCheckin({ checkedInToday: true, streak: d.streak, nextStreak: d.streak, todayReward: 0 });
         setCheckinToast(`签到成功 +${d.earned}${d.streakBonus > 0 ? ` · 连签 ${d.streak} 天` : ''}`);
         setTimeout(() => setCheckinToast(null), 3000);
+        enqueueCelebration(d.newlyLit, d.newTitles);
       } else {
         setCheckin(c => (c ? { ...c, checkedInToday: true, todayReward: 0 } : c));
       }
@@ -770,6 +781,7 @@ const App: React.FC = () => {
             setPointsInfo({ earned: d.points.earned, perfect: d.points.perfect, milestoneBonus: d.points.milestoneBonus });
             if (typeof d.points.total === 'number') setTotalPoints(d.points.total);
           }
+          if (d) enqueueCelebration(d.newlyLit, d.newTitles);
         })
         .catch(err => console.error('Failed to save history:', err));
     }
@@ -1035,6 +1047,7 @@ const App: React.FC = () => {
         <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
         {showHistory && <HistoryView onClose={() => setShowHistory(false)} />}
         {showStarMap && <StarMap onClose={() => setShowStarMap(false)} />}
+        {celebrations.length > 0 && <StarUnlockCelebration items={celebrations} onDone={() => setCelebrations([])} />}
       </div>
     );
   }

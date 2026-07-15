@@ -5,8 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Grammar Master</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+      /* --- Star Map design tokens (night-sky brand language) --- */
+      :root {
+        --sky-0: #0a0a24;      /* deepest night */
+        --sky-1: #141149;      /* indigo */
+        --sky-2: #241a56;      /* purple-indigo */
+        --sky-glow: #3a2a7a;
+        --gold: #f5c453;       /* amber accent */
+        --gold-soft: #ffe6a1;
+        --rar-common: #eef2ff;
+        --rar-rare: #7cc4ff;
+        --rar-epic: #c39bff;
+        --rar-legend: #ffcf5c;
+      }
+      /* Distinctive display font (headings/brand); Nunito stays for body */
+      .font-display { font-family: 'Fredoka', 'Nunito', sans-serif; }
+
+      @keyframes twinkle { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+      @keyframes floatY { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+      @keyframes shootStar {
+        0% { transform: translate(-10vw, -10vh) rotate(35deg); opacity: 0; }
+        10% { opacity: 1; }
+        70% { opacity: 1; }
+        100% { transform: translate(60vw, 55vh) rotate(35deg); opacity: 0; }
+      }
+      .animate-twinkle { animation: twinkle 3s ease-in-out infinite; }
+      .animate-floatY { animation: floatY 4s ease-in-out infinite; }
+
       /* Custom scrollbar */
       ::-webkit-scrollbar {
         width: 6px;

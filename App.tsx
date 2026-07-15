@@ -4,6 +4,7 @@ import { storageService } from './services/storageService';
 import { SentenceAnalysisData, GrammarRole, SentenceStructure, DifficultyLevel, Theme } from './types';
 import { GRAMMAR_ROLES, SENTENCE_STRUCTURES, SKELETON_CONFIG } from './constants';
 import { isGraded, isRoleAcceptable } from './utils/grading';
+import StarMap from './components/StarMap';
 import WordPill from './components/WordPill';
 import ImageUploader from './components/ImageUploader';
 import { useTheme } from './contexts/ThemeContext';
@@ -46,6 +47,7 @@ const App: React.FC = () => {
   // Auth & history UI state
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showStarMap, setShowStarMap] = useState(false);
   const { user, isAuthenticated, token } = useAuth();
 
 
@@ -862,6 +864,18 @@ const App: React.FC = () => {
         <div className="text-center pt-8 pb-6 relative">
           <div className="absolute top-8 right-4 flex gap-3 z-50">
             <ThemeSwitcher />
+            {isAuthenticated && (
+              <button
+                onClick={() => setShowStarMap(true)}
+                type="button"
+                title="语法星图"
+                aria-label="语法星图"
+                style={{ pointerEvents: 'auto', cursor: 'pointer', position: 'relative', zIndex: 100, background: 'linear-gradient(135deg,#241a56,#0a0a24)' }}
+                className="h-10 px-3 rounded-xl text-base shadow-sm transition-all active:scale-95 grid place-items-center text-white hover:brightness-125"
+              >
+                🌌
+              </button>
+            )}
             <button
               onClick={handleUserBtnClick}
               type="button"
@@ -1020,6 +1034,7 @@ const App: React.FC = () => {
         </div>
         <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
         {showHistory && <HistoryView onClose={() => setShowHistory(false)} />}
+        {showStarMap && <StarMap onClose={() => setShowStarMap(false)} />}
       </div>
     );
   }

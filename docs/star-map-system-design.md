@@ -42,46 +42,50 @@
 // 特殊: metric='flag'（探索类）：{ metric:'used_ocr', op:'==', value:true }
 ```
 
-| key | constellation | rarity | hidden | points | criteria(metric op value) |
-|---|---|---|---|---|---|
-| start.first_q | start | common | no | 10 | practices >= 1 |
-| start.first_checkin | start | common | no | 10 | checkin_total >= 1 |
-| start.first_perfect | start | rare | no | 30 | perfect_total >= 1 |
-| diligent.10 | diligent | common | no | 10 | practices >= 10 |
-| diligent.50 | diligent | rare | no | 30 | practices >= 50 |
-| diligent.100 | diligent | epic | no | 50 | practices >= 100 |
-| diligent.500 | diligent | legendary | no | 100 | practices >= 500 |
-| streak.3 | streak | common | no | 10 | max_checkin_streak >= 3 |
-| streak.7 | streak | rare | no | 30 | max_checkin_streak >= 7 |
-| streak.14 | streak | epic | no | 50 | max_checkin_streak >= 14 |
-| streak.30 | streak | legendary | no | 100 | max_checkin_streak >= 30 |
-| accuracy.perfect10 | accuracy | rare | no | 30 | perfect_total >= 10 |
-| accuracy.perfect50 | accuracy | epic | no | 50 | perfect_total >= 50 |
-| accuracy.streak5 | accuracy | epic | no | 50 | max_perfect_streak >= 5 |
-| summit.inter | summit | rare | no | 30 | intermediate_done >= 1 |
-| summit.adv | summit | epic | no | 50 | advanced_done >= 1 |
-| summit.adv20 | summit | legendary | no | 100 | advanced_done >= 20 |
-| structure.sv | structure | common | no | 10 | correct_structures contains SV |
-| structure.svo | structure | common | no | 10 | correct_structures contains SVO |
-| structure.sp | structure | common | no | 10 | correct_structures contains SP |
-| structure.svoo | structure | rare | no | 30 | correct_structures contains SVOO |
-| structure.svoc | structure | rare | no | 30 | correct_structures contains SVOC |
-| explore.ocr | explore | rare | no | 30 | used_ocr == true |
-| explore.custom | explore | rare | no | 30 | used_custom == true |
-| explore.theme | explore | common | no | 10 | changed_theme == true |
-| explore.all_levels | explore | epic | no | 50 | basic_done>0 && inter_done>0 && adv_done>0 |
-| fun.morning | fun | rare | no | 30 | practice_in_hour_range [6,9) |
-| fun.night | fun | rare | no | 30 | practice_in_hour_range [22,24) |
-| fun.points1000 | fun | legendary | no | 100 | total_points >= 1000 |
-| fun.egg | fun | legendary | **yes** | 150 | (隐藏:如 7 天内每天至少 1 次完美) |
+| key | title | constellation | rarity | hidden | points | criteria(metric op value) |
+|---|---|---|---|---|---|---|
+| start.first_q | 初星点亮 | start | common | no | 10 | practices >= 1 |
+| start.first_checkin | 星空初约 | start | common | no | 10 | checkin_total >= 1 |
+| start.first_perfect | 完美启程 | start | rare | no | 30 | perfect_total >= 1 |
+| diligent.10 | 好学新芽 | diligent | common | no | 10 | practices >= 10 |
+| diligent.50 | 学海行者 | diligent | rare | no | 30 | practices >= 50 |
+| diligent.100 | 百题斩 | diligent | epic | no | 50 | practices >= 100 |
+| diligent.500 | 星海学者 | diligent | legendary | no | 100 | practices >= 500 |
+| streak.3 | 三日火种 | streak | common | no | 10 | max_checkin_streak >= 3 |
+| streak.7 | 七日燃烧 | streak | rare | no | 30 | max_checkin_streak >= 7 |
+| streak.14 | 恒心之焰 | streak | epic | no | 50 | max_checkin_streak >= 14 |
+| streak.30 | 月度恒星 | streak | legendary | no | 100 | max_checkin_streak >= 30 |
+| accuracy.perfect10 | 十次命中 | accuracy | rare | no | 30 | perfect_total >= 10 |
+| accuracy.perfect50 | 完美神射 | accuracy | epic | no | 50 | perfect_total >= 50 |
+| accuracy.streak5 | 五连击 | accuracy | epic | no | 50 | max_perfect_streak >= 5 |
+| summit.inter | 初登高峰 | summit | rare | no | 30 | intermediate_done >= 1 |
+| summit.adv | 勇攀高阶 | summit | epic | no | 50 | advanced_done >= 1 |
+| summit.adv20 | 巅峰征服者 | summit | legendary | no | 100 | advanced_done >= 20 |
+| structure.sv | 主谓初识 | structure | common | no | 10 | correct_structures contains SV |
+| structure.svo | 主谓宾达人 | structure | common | no | 10 | correct_structures contains SVO |
+| structure.sp | 主表之星 | structure | common | no | 10 | correct_structures contains SP |
+| structure.svoo | 双宾猎手 | structure | rare | no | 30 | correct_structures contains SVOO |
+| structure.svoc | 宾补大师 | structure | rare | no | 30 | correct_structures contains SVOC |
+| explore.ocr | 光影识句 | explore | rare | no | 30 | used_ocr == true |
+| explore.custom | 自由造句 | explore | rare | no | 30 | used_custom == true |
+| explore.theme | 百变星空 | explore | common | no | 10 | changed_theme == true |
+| explore.all_levels | 全域探索家 | explore | epic | no | 50 | basic_done>0 && inter_done>0 && adv_done>0 |
+| fun.morning | 晨曦之星 | fun | rare | no | 30 | practice_in_hour_range [6,9) |
+| fun.night | 夜猫之星 | fun | rare | no | 30 | practice_in_hour_range [22,24) |
+| fun.points1000 | 千分宝藏 | fun | legendary | no | 100 | total_points >= 1000 |
+| fun.egg | 完美七曜 | fun | legendary | **yes** | 150 | (隐藏:如 7 天内每天至少 1 次完美) |
 
 **称号(Title)**:集齐某星座全部**非隐藏**星即授予。
 | title_key | 触发星座 | 名称 |
 |---|---|---|
+| title.trailblazer | start | 星途启航者 |
 | title.scholar | diligent | 星空学者 |
 | title.eternal_flame | streak | 不灭之火 |
+| title.sharpshooter | accuracy | 语法神射手 |
 | title.stargazer | structure | 句型观星者 |
 | title.climber | summit | 攀星者 |
+| title.explorer | explore | 星海探索家 |
+| title.wonder_seeker | fun | 奇趣寻星者 |
 | title.starmaster | (全部星座集齐) | 星图大师 |
 
 ---
@@ -181,7 +185,7 @@ CREATE TABLE user_titles (
 返回整册 + 用户进度。
 ```json
 {
-  "summary": { "litCount": 12, "totalStars": 28, "constellationsDone": 2, "totalConstellations": 8 },
+  "summary": { "litCount": 12, "totalStars": 30, "constellationsDone": 2, "totalConstellations": 8 },
   "activeTitle": "title.scholar",
   "titles": [ { "key":"title.scholar", "name":"星空学者", "earnedAt":"..." } ],
   "constellations": [

@@ -1290,11 +1290,11 @@ const App: React.FC = () => {
     }
   };
 
-  const phase1Bg = isFresh ? 'bg-emerald-500' : 'bg-pink-500';
-  const phase2Bg = isFresh ? 'bg-teal-500' : 'bg-orange-500';
-  const selectedBorder = isFresh ? 'border-emerald-500 bg-emerald-50/50' : 'border-pink-500 bg-pink-50/50';
-  const selectedRadio = isFresh ? 'border-emerald-500 bg-emerald-500' : 'border-pink-500 bg-pink-500';
-  const selectedText = isFresh ? 'text-emerald-700' : 'text-pink-700';
+  const phase1Bg = isFresh ? 'bg-emerald-500' : 'bg-[#5b3fb0]';
+  const phase2Bg = isFresh ? 'bg-teal-500' : 'bg-[#c68a12]';
+  const selectedBorder = isFresh ? 'border-emerald-500 bg-emerald-50/50' : 'border-[#7c5fe0] bg-[#7c5fe0]/10';
+  const selectedRadio = isFresh ? 'border-emerald-500 bg-emerald-500' : 'border-[#7c5fe0] bg-[#7c5fe0]';
+  const selectedText = isFresh ? 'text-emerald-700' : 'text-[#5b3fb0]';
 
   return (
     <div className={`min-h-screen ${gameBg} pb-32`}>
@@ -1810,9 +1810,9 @@ const App: React.FC = () => {
               onClick={checkResults}
               disabled={!selectedStructure}
               className={`
-                w-full text-white text-lg font-black py-4 rounded-2xl shadow-xl active:scale-95 transition-transform uppercase tracking-wider
+                w-full text-white text-lg font-black font-display py-4 rounded-2xl shadow-xl active:scale-95 transition-transform uppercase tracking-wider
                 ${selectedStructure
-                  ? (isFresh ? 'bg-gradient-to-r from-emerald-400 to-cyan-500' : 'bg-gradient-to-r from-purple-500 to-pink-500')
+                  ? (isFresh ? 'bg-gradient-to-r from-emerald-400 to-cyan-500' : 'bg-gradient-to-r from-[#7c5fe0] to-[#5b3fb0]')
                   : 'bg-gray-300 cursor-not-allowed'}
               `}
             >

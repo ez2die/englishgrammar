@@ -724,11 +724,11 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onTextRecognized, onError
   
   const buttonPrimary = isFresh
     ? 'bg-gradient-to-r from-emerald-400 to-cyan-500'
-    : 'bg-gradient-to-r from-purple-500 to-pink-500';
-  
+    : 'bg-gradient-to-r from-[#7c5fe0] to-[#5b3fb0]';
+
   const buttonSecondary = isFresh
     ? 'bg-gradient-to-r from-cyan-400 to-sky-500'
-    : 'bg-gradient-to-r from-pink-400 to-rose-500';
+    : 'bg-gradient-to-r from-[#6fd0b6] to-[#3fa88f]';
 
   return (
     <>

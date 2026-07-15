@@ -86,9 +86,10 @@ const StarUnlockCelebration: React.FC<Props> = ({ items, onDone }) => {
         </div>
       </div>
 
-      {/* stardust drift */}
+      {/* stardust drift — subtle bottom band */}
       <img src={effectImg('stardust')} alt="" aria-hidden
-        className="pointer-events-none absolute bottom-0 left-0 right-0 w-full object-cover opacity-60"
+        className="pointer-events-none absolute bottom-0 left-0 right-0 w-full h-32 object-cover object-bottom opacity-25"
+        style={{ maskImage: 'linear-gradient(to top, black, transparent)', WebkitMaskImage: 'linear-gradient(to top, black, transparent)' }}
         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
     </div>
   );

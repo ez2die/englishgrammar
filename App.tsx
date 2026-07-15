@@ -6,6 +6,7 @@ import { GRAMMAR_ROLES, SENTENCE_STRUCTURES, SKELETON_CONFIG } from './constants
 import { isGraded, isRoleAcceptable } from './utils/grading';
 import StarMap from './components/StarMap';
 import StarUnlockCelebration, { CelebrationItem } from './components/StarUnlockCelebration';
+import { Sprout, Zap, Flame, Telescope, Trophy, CalendarCheck, ChevronRight, LogIn } from 'lucide-react';
 import WordPill from './components/WordPill';
 import ImageUploader from './components/ImageUploader';
 import { useTheme } from './contexts/ThemeContext';
@@ -58,6 +59,18 @@ const App: React.FC = () => {
     (newTitles || []).forEach((t: any) => items.push({ kind: 'title', name: t.name }));
     if (items.length) setCelebrations(items);
   };
+
+  // Report a theme change server-side (lights the 换装达人 star) — skip first render.
+  const themeInit = useRef(true);
+  useEffect(() => {
+    if (themeInit.current) { themeInit.current = false; return; }
+    if (!token) return;
+    fetch('/api/user/flag', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ name: 'theme' }) })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (d) enqueueCelebration(d.newlyLit, d.newTitles); })
+      .catch(() => { });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [theme]);
   const { user, isAuthenticated, token } = useAuth();
 
 
@@ -846,91 +859,88 @@ const App: React.FC = () => {
   if (!data && !loading) {
     const isFresh = theme === Theme.FRESH;
 
-    const homeBg = isFresh
-      ? 'bg-gradient-to-br from-emerald-50 via-cyan-50 to-sky-50'
-      : 'bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50';
-
-    const titleGradient = isFresh
-      ? 'bg-gradient-to-r from-emerald-600 via-cyan-600 to-sky-500'
-      : 'bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500';
-
-    const cardBg = isFresh
-      ? 'bg-white/90 backdrop-blur-sm border-emerald-200'
-      : 'bg-white/80 backdrop-blur-sm border-purple-200';
-
-    const level1Btn = isFresh
-      ? 'bg-gradient-to-r from-emerald-300 to-teal-400 border-emerald-500 text-emerald-50'
-      : 'bg-gradient-to-r from-green-400 to-emerald-500 border-green-600 text-green-100';
-
-    const level2Btn = isFresh
-      ? 'bg-gradient-to-r from-cyan-300 to-sky-400 border-cyan-500 text-cyan-50'
-      : 'bg-gradient-to-r from-yellow-400 to-orange-500 border-orange-600 text-orange-100';
-
-    const level3Btn = isFresh
-      ? 'bg-gradient-to-r from-sky-300 to-blue-400 border-sky-500 text-sky-50'
-      : 'bg-gradient-to-r from-pink-500 to-rose-600 border-rose-700 text-pink-100';
+    // "Cozy Planetarium at Dusk" — night-sky brand band over a warm study surface.
+    const cream = isFresh ? '#eefaf5' : '#fbf5ea';
+    const ink = isFresh ? '#173a34' : '#2a2440';
+    const muted = isFresh ? 'rgba(23,58,52,.62)' : 'rgba(42,36,64,.62)';
+    const levels = [
+      { lvl: DifficultyLevel.BASIC, n: 'Level 1', t: 'Basic', sub: 'Simple Structures', Icon: Sprout, grad: 'linear-gradient(135deg,#6fd0b6,#3fa88f)' },
+      { lvl: DifficultyLevel.INTERMEDIATE, n: 'Level 2', t: 'Intermediate', sub: 'With Modifiers', Icon: Zap, grad: 'linear-gradient(135deg,#ffce6b,#f0a93a)' },
+      { lvl: DifficultyLevel.ADVANCED, n: 'Level 3', t: 'Advanced', sub: 'Complex Clauses', Icon: Flame, grad: 'linear-gradient(135deg,#b06ad0,#7a4bb8)' },
+    ];
 
     return (
-      <div className={`min-h-screen ${homeBg} p-4 pb-8`}>
-        {/* Header */}
-        <div className="text-center pt-8 pb-6 relative">
-          <div className="absolute top-8 right-4 flex gap-3 z-50">
+      <div className="min-h-screen pb-10" style={{ background: cream }}>
+        {/* Night-sky hero band (brand) */}
+        <div className="relative overflow-hidden rounded-b-[36px] px-4 pt-6 pb-12"
+          style={{ background: 'linear-gradient(180deg,#141149,#241a56)', boxShadow: '0 18px 42px -26px rgba(20,17,73,.75)' }}>
+          <div className="pointer-events-none absolute inset-0">
+            {[...Array(18)].map((_, i) => (
+              <span key={i} className="absolute rounded-full bg-white animate-twinkle"
+                style={{ left: `${(i * 61) % 100}%`, top: `${(i * 37) % 72}%`, width: (i % 3) + 1, height: (i % 3) + 1, opacity: 0.5, animationDelay: `${(i % 6) * 0.5}s` }} />
+            ))}
+          </div>
+
+          {/* top-right controls */}
+          <div className="absolute top-5 right-4 flex gap-2 z-50">
             <ThemeSwitcher />
             {isAuthenticated && (
-              <button
-                onClick={() => setShowStarMap(true)}
-                type="button"
-                title="语法星图"
-                aria-label="语法星图"
-                style={{ pointerEvents: 'auto', cursor: 'pointer', position: 'relative', zIndex: 100, background: 'linear-gradient(135deg,#241a56,#0a0a24)' }}
-                className="h-10 px-3 rounded-xl text-base shadow-sm transition-all active:scale-95 grid place-items-center text-white hover:brightness-125"
-              >
-                🌌
+              <button onClick={() => setShowStarMap(true)} type="button" title="语法星图" aria-label="语法星图"
+                style={{ pointerEvents: 'auto', cursor: 'pointer', zIndex: 100 }}
+                className="h-10 w-10 grid place-items-center rounded-xl text-white bg-white/10 hover:bg-white/20 transition active:scale-95">
+                <Telescope size={18} />
               </button>
             )}
-            <button
-              onClick={handleUserBtnClick}
-              type="button"
-              style={{ pointerEvents: 'auto', cursor: 'pointer', position: 'relative', zIndex: 100 }}
-              className={`
-                  h-10 px-4 rounded-xl font-bold text-sm shadow-sm transition-all active:scale-95 flex items-center gap-2
-                  ${isFresh
-                  ? 'bg-white text-emerald-600 hover:bg-emerald-50'
-                  : 'bg-white text-purple-600 hover:bg-purple-50'}
-                `}
-            >
-              <span>{isAuthenticated ? '👤 ' + user?.username : '🔐 Login'}</span>
-              {isAuthenticated && totalPoints !== null && (
-                <span className={`${isFresh ? 'text-amber-600' : 'text-amber-500'} font-black`}>🏆 {totalPoints}</span>
-              )}
+            <button onClick={handleUserBtnClick} type="button"
+              style={{ pointerEvents: 'auto', cursor: 'pointer', zIndex: 100 }}
+              className="h-10 px-3 rounded-xl font-bold text-sm text-white bg-white/10 hover:bg-white/20 transition active:scale-95 flex items-center gap-2 font-display">
+              {isAuthenticated ? (
+                <>
+                  <span className="truncate max-w-[84px]">{user?.username}</span>
+                  {totalPoints !== null && (
+                    <span className="flex items-center gap-1 font-black" style={{ color: 'var(--gold)' }}><Trophy size={14} /> {totalPoints}</span>
+                  )}
+                </>
+              ) : (<><LogIn size={16} /> Login</>)}
             </button>
           </div>
-          <h1 className={`text-5xl font-black text-transparent bg-clip-text ${titleGradient} mb-2`}>
-            Grammar Master
-          </h1>
-          <p className={`${isFresh ? 'text-slate-600' : 'text-gray-600'} text-sm font-medium`}>Master English Sentence Structure</p>
+
+          {/* brand */}
+          <div className="relative text-center pt-7 reveal" style={{ animationDelay: '40ms' }}>
+            <img src="/assets/star-map/opt/mascots/guide-v1.webp" alt="" aria-hidden
+              className="mx-auto w-16 h-16 object-contain animate-floatY mb-1"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+            <h1 className="text-[2.6rem] leading-none font-black font-display"
+              style={{ background: 'linear-gradient(90deg,var(--gold-soft),var(--gold))', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>
+              Grammar Master
+            </h1>
+            <p className="mt-2 text-sm font-medium text-white/70">✦ 点亮句子结构，收集你的语法星图 ✦</p>
+          </div>
         </div>
+
+        <div className="px-4 -mt-5">
 
         {/* Daily check-in */}
         {isAuthenticated && checkin && (
-          <div className="max-w-md mx-auto mb-6">
-            <div className={`${cardBg} rounded-2xl p-4 border-2 shadow-lg flex items-center justify-between gap-3`}>
-              <div className="min-w-0">
-                <div className={`text-sm font-black ${isFresh ? 'text-slate-800' : 'text-gray-800'}`}>📅 每日签到</div>
-                <div className={`text-xs font-medium ${isFresh ? 'text-slate-500' : 'text-gray-500'}`}>
-                  {checkin.checkedInToday
-                    ? `已连续签到 ${checkin.streak} 天 · 明天再来 🔥`
-                    : `连签 ${checkin.streak} 天 · 今日可得 +${checkin.todayReward}`}
+          <div className="max-w-md mx-auto mb-4 reveal" style={{ animationDelay: '120ms' }}>
+            <div className="rounded-2xl p-4 flex items-center justify-between gap-3 border shadow-lg" style={{ background: '#fff', borderColor: 'rgba(0,0,0,.06)' }}>
+              <div className="min-w-0 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'rgba(245,196,83,.18)', color: '#c68a12' }}><CalendarCheck size={20} /></div>
+                <div className="min-w-0">
+                  <div className="text-sm font-black font-display" style={{ color: ink }}>每日签到</div>
+                  <div className="text-xs font-medium" style={{ color: muted }}>
+                    {checkin.checkedInToday
+                      ? `已连续签到 ${checkin.streak} 天 · 明天再来`
+                      : `连签 ${checkin.streak} 天 · 今日可得 +${checkin.todayReward}`}
+                  </div>
                 </div>
               </div>
               <button
                 onClick={handleCheckin}
                 disabled={checkin.checkedInToday}
                 type="button"
-                className={`shrink-0 px-4 h-10 rounded-xl font-black text-sm shadow transition-all
-                  ${checkin.checkedInToday
-                    ? 'bg-gray-200 text-gray-400 cursor-default'
-                    : 'bg-amber-400 text-amber-900 hover:bg-amber-300 active:scale-95'}`}
+                className={`shrink-0 px-4 h-10 rounded-xl font-black text-sm transition-all font-display ${checkin.checkedInToday ? 'bg-gray-100 text-gray-400 cursor-default' : 'text-amber-900 active:scale-95 hover:brightness-105'}`}
+                style={checkin.checkedInToday ? undefined : { background: 'var(--gold)' }}
               >
                 {checkin.checkedInToday ? '已签到 ✓' : `签到 +${checkin.todayReward}`}
               </button>
@@ -951,7 +961,7 @@ const App: React.FC = () => {
         )}
 
         {/* OCR Image Uploader */}
-        <div className="max-w-md mx-auto mb-6">
+        <div className="max-w-md mx-auto mb-5 reveal" style={{ animationDelay: '200ms' }}>
           <ImageUploader
             onTextRecognized={async (text: string) => {
               setLoading(true);
@@ -1000,49 +1010,24 @@ const App: React.FC = () => {
           />
         </div>
 
-        {/* Level Cards */}
-        <div className="max-w-md mx-auto space-y-4">
-          <button
-            onClick={() => initGame(DifficultyLevel.BASIC)}
-            className={`w-full ${level1Btn} text-white p-6 rounded-3xl shadow-xl border-2 active:scale-95 transition-all transform hover:shadow-2xl`}
-          >
-            <div className="flex items-center gap-4">
-              <div className="text-4xl">🌱</div>
-              <div className="text-left flex-1">
-                <div className="text-xl font-black mb-1">Level 1: Basic</div>
-                <div className={`${level1Btn.split(' ').pop()} text-sm font-semibold`}>Simple Structures</div>
+        {/* Level Cards — dawn → day → dusk */}
+        <div className="max-w-md mx-auto space-y-3.5">
+          {levels.map((L, i) => (
+            <button key={L.t} onClick={() => initGame(L.lvl)}
+              className="reveal group w-full p-5 rounded-3xl text-white active:scale-[.98] transition-all"
+              style={{ background: L.grad, boxShadow: '0 14px 30px -18px rgba(0,0,0,.5)', animationDelay: `${260 + i * 90}ms` }}>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl grid place-items-center bg-white/20 shrink-0"><L.Icon size={24} /></div>
+                <div className="text-left flex-1">
+                  <div className="text-[11px] font-bold uppercase tracking-wider opacity-80">{L.n}</div>
+                  <div className="text-xl font-black font-display leading-tight">{L.t}</div>
+                  <div className="text-xs font-semibold opacity-85">{L.sub}</div>
+                </div>
+                <ChevronRight className="opacity-70 group-hover:translate-x-1 transition-transform" size={22} />
               </div>
-              <div className="text-2xl">→</div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => initGame(DifficultyLevel.INTERMEDIATE)}
-            className={`w-full ${level2Btn} text-white p-6 rounded-3xl shadow-xl border-2 active:scale-95 transition-all transform hover:shadow-2xl`}
-          >
-            <div className="flex items-center gap-4">
-              <div className="text-4xl">⚡</div>
-              <div className="text-left flex-1">
-                <div className="text-xl font-black mb-1">Level 2: Intermediate</div>
-                <div className={`${level2Btn.split(' ').pop()} text-sm font-semibold`}>With Modifiers</div>
-              </div>
-              <div className="text-2xl">→</div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => initGame(DifficultyLevel.ADVANCED)}
-            className={`w-full ${level3Btn} text-white p-6 rounded-3xl shadow-xl border-2 active:scale-95 transition-all transform hover:shadow-2xl`}
-          >
-            <div className="flex items-center gap-4">
-              <div className="text-4xl">🔥</div>
-              <div className="text-left flex-1">
-                <div className="text-xl font-black mb-1">Level 3: Advanced</div>
-                <div className={`${level3Btn.split(' ').pop()} text-sm font-semibold`}>Complex Clauses</div>
-              </div>
-              <div className="text-2xl">→</div>
-            </div>
-          </button>
+            </button>
+          ))}
+        </div>
         </div>
         <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
         {showHistory && <HistoryView onClose={() => setShowHistory(false)} />}
@@ -1695,8 +1680,9 @@ const App: React.FC = () => {
 
         {/* Results */}
         {showResult && resultMeta && (
-          <div ref={resultRef} className={`${isFresh ? 'bg-gradient-to-br from-emerald-500 to-cyan-500' : 'bg-gradient-to-br from-purple-600 to-pink-600'} text-white rounded-3xl p-6 shadow-2xl space-y-5 animate-fade-in`}>
-            <h3 className="text-2xl font-black flex items-center gap-2">
+          <div ref={resultRef} className="text-white rounded-3xl p-6 shadow-2xl space-y-5 animate-fade-in"
+            style={{ background: 'linear-gradient(160deg,#241a56,#141149)', boxShadow: '0 22px 50px -26px rgba(20,17,73,.8)' }}>
+            <h3 className="text-2xl font-black font-display flex items-center gap-2" style={{ color: 'var(--gold-soft)' }}>
               <span>🎯</span> Results
             </h3>
 

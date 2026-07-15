@@ -1,0 +1,1162 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-07-15",
+  "styleReference": "source/style-master-v1.png",
+  "assets": [
+    {
+      "id": "style-board-v1-alternative",
+      "type": "style-board",
+      "status": "rejected",
+      "path": "review/style-board-v1-alternative.png",
+      "prompt": "prompts/style-board-v1.md",
+      "dimensions": [1536, 1024],
+      "mode": "RGB",
+      "sha256": "f4670371f69b68b7d5660c7e7368ecf112b6b169f6159752af8c80e9afd140be",
+      "notes": "第一版风格较厚重,保留用于对比。"
+    },
+    {
+      "id": "style-master-v1",
+      "type": "style-board",
+      "status": "approved",
+      "path": "source/style-master-v1.png",
+      "prompt": "prompts/style-master-v1.md",
+      "dimensions": [1536, 1024],
+      "mode": "RGB",
+      "sha256": "5bbf682257bbd0cc36769ff2213e8db1e3cdfc737248e8bbcc22003a829764bf",
+      "notes": "用户确认采用的第二版;后续生成必须引用此图。"
+    },
+    {
+      "id": "rarity-common-v1-chroma",
+      "type": "generation-source",
+      "status": "approved",
+      "path": "source/rarity-common-v1-chroma.png",
+      "prompt": "prompts/rarity-common-v1.md",
+      "references": ["style-master-v1"],
+      "dimensions": [1254, 1254],
+      "mode": "RGB",
+      "sha256": "cf42f3c370696ad7a388be2b20179db76d1be663fdd24d21379bd019e93fdf2b",
+      "notes": "纯色底生成源,不得直接用于产品。"
+    },
+    {
+      "id": "rarity-common-base-v1",
+      "type": "rarity-base",
+      "rarity": "common",
+      "status": "production",
+      "path": "rarities/common-base-v1.png",
+      "source": "rarity-common-v1-chroma",
+      "dimensions": [1024, 1024],
+      "contentBbox": [161, 157, 863, 859],
+      "mode": "RGBA",
+      "sha256": "4a0e1c599f55d5696884057ae48576dc2170727819bc0230dbdd32faa81fc5c2",
+      "processing": {
+        "method": "remove_chroma_key.py",
+        "autoKey": "border",
+        "softMatte": true,
+        "despill": true,
+        "edgeContract": 1,
+        "deliveryResize": [1024, 1024]
+      },
+      "qa": {
+        "alphaChannel": true,
+        "transparentCorners": true,
+        "edgeFringe": "pass",
+        "padding": "pass"
+      }
+    },
+    {
+      "id": "rarity-rare-v1-chroma",
+      "type": "generation-source",
+      "status": "approved",
+      "path": "source/rarity-rare-v1-chroma.png",
+      "prompt": "prompts/rarity-rare-v1.md",
+      "references": ["style-master-v1", "rarity-common-base-v1"],
+      "dimensions": [1254, 1254],
+      "mode": "RGB",
+      "sha256": "7f5a9d7956f71cc15652fb66f5ffb3cc6d796b75f4bfda57b02a87eef6fa444b",
+      "notes": "Rare 纯色底生成源,不得直接用于产品。"
+    },
+    {
+      "id": "rarity-rare-base-v1",
+      "type": "rarity-base",
+      "rarity": "rare",
+      "status": "production",
+      "path": "rarities/rare-base-v1.png",
+      "source": "rarity-rare-v1-chroma",
+      "dimensions": [1024, 1024],
+      "contentBbox": [137, 124, 888, 874],
+      "mode": "RGBA",
+      "sha256": "cebff676f98fa539ca7a150bcaa2d20a28f979a79f337b04b8e60755973274a0",
+      "processing": {
+        "method": "remove_chroma_key.py",
+        "autoKey": "border",
+        "softMatte": true,
+        "despill": true,
+        "edgeContract": 1,
+        "deliveryResize": [1024, 1024]
+      },
+      "qa": {
+        "alphaChannel": true,
+        "transparentCorners": true,
+        "edgeFringe": "pass",
+        "padding": "pass"
+      }
+    },
+    {
+      "id": "rarity-epic-v1-chroma",
+      "type": "generation-source",
+      "status": "approved",
+      "path": "source/rarity-epic-v1-chroma.png",
+      "prompt": "prompts/rarity-epic-v1.md",
+      "references": ["style-master-v1", "rarity-rare-base-v1"],
+      "dimensions": [1254, 1254],
+      "mode": "RGB",
+      "sha256": "b625ef9d5fd1bb40bdb8ffe4b48013fbc431d3557e010c5e1ffcc28aa6aa6a29",
+      "notes": "Epic 纯色底生成源,不得直接用于产品。"
+    },
+    {
+      "id": "rarity-epic-base-v1",
+      "type": "rarity-base",
+      "rarity": "epic",
+      "status": "production",
+      "path": "rarities/epic-base-v1.png",
+      "source": "rarity-epic-v1-chroma",
+      "dimensions": [1024, 1024],
+      "contentBbox": [129, 122, 894, 892],
+      "mode": "RGBA",
+      "sha256": "0c604ac8c0564662be66e313a63d24afc8ce3c76a072f66f9a370d8c3eec667d",
+      "processing": {
+        "method": "remove_chroma_key.py",
+        "autoKey": "border",
+        "softMatte": true,
+        "despill": true,
+        "edgeContract": 1,
+        "deliveryResize": [1024, 1024],
+        "contentScale": [960, 960]
+      },
+      "qa": {
+        "alphaChannel": true,
+        "transparentCorners": true,
+        "edgeFringe": "pass",
+        "padding": "pass"
+      }
+    },
+    {
+      "id": "rarity-legendary-v1-chroma",
+      "type": "generation-source",
+      "status": "approved",
+      "path": "source/rarity-legendary-v1-chroma.png",
+      "prompt": "prompts/rarity-legendary-v1.md",
+      "references": ["style-master-v1", "rarity-epic-base-v1"],
+      "dimensions": [1254, 1254],
+      "mode": "RGB",
+      "sha256": "dc7cdcb4c8044423a70efc88c15928d94d633fceb597c4f03ff0c2b12b74de60",
+      "notes": "Legendary 纯色底生成源,不得直接用于产品。"
+    },
+    {
+      "id": "rarity-legendary-base-v1",
+      "type": "rarity-base",
+      "rarity": "legendary",
+      "status": "production",
+      "path": "rarities/legendary-base-v1.png",
+      "source": "rarity-legendary-v1-chroma",
+      "dimensions": [1024, 1024],
+      "contentBbox": [134, 126, 889, 886],
+      "mode": "RGBA",
+      "sha256": "105f1dacac839e304ba8166f3f51e3d2e6976700db7e06738d26b2d0cbd05ae7",
+      "processing": {
+        "method": "remove_chroma_key.py",
+        "autoKey": "border",
+        "softMatte": true,
+        "despill": true,
+        "edgeContract": 1,
+        "deliveryResize": [1024, 1024],
+        "contentScale": [944, 944]
+      },
+      "qa": {
+        "alphaChannel": true,
+        "transparentCorners": true,
+        "edgeFringe": "pass",
+        "padding": "pass",
+        "familyContactSheet": "rarities-v1-contact-sheet"
+      }
+    },
+    {
+      "id": "rarities-v1-contact-sheet",
+      "type": "review-contact-sheet",
+      "status": "approved",
+      "path": "review/rarities-v1-contact-sheet.png",
+      "dimensions": [2048, 620],
+      "mode": "RGB",
+      "sha256": "2dcf63b8cf9de8e9c7e5bc859958bc843048177fc8a4f61695ec6f7adb218860",
+      "notes": "四档稀有度跨资产风格与层级验收通过。"
+    },
+    {
+      "id": "constellation-start-v1-chroma",
+      "type": "generation-source",
+      "status": "rejected",
+      "path": "source/constellation-start-v1-chroma.png",
+      "prompt": "prompts/constellation-start-v1.md",
+      "references": ["style-master-v1"],
+      "dimensions": [1254, 1254],
+      "mode": "RGB",
+      "sha256": "13e02cb3eebf4e4d5b1626af6361c336fd6ccd8ad906321eea812f1b57ba0c04",
+      "notes": "绿色抠图底与金色辉光混色,保留为失败样本。"
+    },
+    {
+      "id": "constellation-start-v1-green-key-rejected",
+      "type": "review-rejected",
+      "status": "rejected",
+      "path": "review/constellation-start-v1-green-key-rejected.png",
+      "source": "constellation-start-v1-chroma",
+      "dimensions": [1024, 1024],
+      "contentBbox": [260, 107, 764, 879],
+      "mode": "RGBA",
+      "sha256": "5a7d8f956b6f8140bd68f1e24d3b3537cdb7001792597739e4838237f65c6c21",
+      "qa": {
+        "alphaChannel": true,
+        "transparentCorners": true,
+        "edgeFringe": "fail",
+        "padding": "pass"
+      },
+      "notes": "北极星辉光出现橄榄绿色污染,不得用于产品。"
+    },
+    {
+      "id": "constellation-start-v2-chroma",
+      "type": "generation-source",
+      "status": "rejected",
+      "path": "source/constellation-start-v2-chroma.png",
+      "prompt": "prompts/constellation-start-v2.md",
+      "references": ["style-master-v1", "constellation-start-v1-green-key-rejected"],
+      "dimensions": [1254, 1254],
+      "mode": "RGB",
+      "sha256": "45f4a85a66643790a954aa33dbc04736d345601ce0462136d1b4c35d58eb1953",
+      "notes": "品红抠图底仍污染半透明金色辉光,保留为失败样本。"
+    },
+    {
+      "id": "constellation-start-v2-magenta-key-rejected",
+      "type": "review-rejected",
+      "status": "rejected",
+      "path": "review/constellation-start-v2-magenta-key-rejected.png",
+      "source": "constellation-start-v2-chroma",
+      "dimensions": [1024, 1024],
+      "contentBbox": [275, 139, 749, 863],
+      "mode": "RGBA",
+      "sha256": "38d6b92696f49c396cf64a6978525e42e0e1206b2de0d38d6308d275d1401dae",
+      "qa": {
+        "alphaChannel": true,
+        "transparentCorners": true,
+        "edgeFringe": "fail",
+        "padding": "pass"
+      },
+      "notes": "北极星辉光出现粉色污染,不得用于产品。V3 移除生成态外发光。"
+    },
+    {
+      "id": "constellation-start-v3-chroma",
+      "type": "generation-source",
+      "status": "approved",
+      "path": "source/constellation-start-v3-chroma.png",
+      "prompt": "prompts/constellation-start-v3.md",
+      "references": ["style-master-v1", "constellation-start-v2-magenta-key-rejected"],
+      "dimensions": [1254, 1254],
+      "mode": "RGB",
+      "sha256": "57da97a65c444eee153b8e6aaf777821eb602cf03b086fa59f7b4c10c9cf679f",
+      "notes": "无外发光的品红底实体源图。"
+    },
+    {
+      "id": "constellation-start-v1",
+      "type": "constellation",
+      "constellation": "start",
+      "status": "production",
+      "path": "constellations/start-v1.png",
+      "source": "constellation-start-v3-chroma",
+      "dimensions": [1024, 1024],
+      "contentBbox": [265, 117, 758, 854],
+      "mode": "RGBA",
+      "sha256": "91c70a4349f133e6e6a3f24606fde5f28b4538d8d2c15df224035633912e80ef",
+      "processing": {
+        "method": "remove_chroma_key.py",
+        "autoKey": "border",
+        "softMatte": true,
+        "despill": true,
+        "edgeContract": 1,
+        "deliveryResize": [1024, 1024]
+      },
+      "qa": {
+        "alphaChannel": true,
+        "transparentCorners": true,
+        "edgeFringe": "pass",
+        "padding": "pass",
+        "generatedGlow": false
+      }
+    },
+    {
+      "id": "constellation-diligent-v1-chroma",
+      "type": "generation-source",
+      "status": "approved",
+      "path": "source/constellation-diligent-v1-chroma.png",
+      "prompt": "prompts/constellation-diligent-v1.md",
+      "references": ["style-master-v1", "constellation-start-v1"],
+      "dimensions": [1254, 1254],
+      "mode": "RGB",
+      "sha256": "68cc1b4a71a51e19bf6b34c0f783b4a7636c0026ec2f16ab6603b59a1a271b8b",
+      "notes": "无外发光的品红底实体源图。"
+    },
+    {
+      "id": "constellation-diligent-v1",
+      "type": "constellation",
+      "constellation": "diligent",
+      "status": "production",
+      "path": "constellations/diligent-v1.png",
+      "source": "constellation-diligent-v1-chroma",
+      "dimensions": [1024, 1024],
+      "contentBbox": [157, 204, 912, 808],
+      "mode": "RGBA",
+      "sha256": "8c1fe189f7c022c69e23a355705843c80d2e262d153489da50f4abfc57e98a4f",
+      "processing": {
+        "method": "remove_chroma_key.py",
+        "autoKey": "border",
+        "softMatte": true,
+        "despill": true,
+        "edgeContract": 1,
+        "deliveryResize": [1024, 1024],
+        "contentScale": [960, 960]
+      },
+      "qa": {
+        "alphaChannel": true,
+        "transparentCorners": true,
+        "edgeFringe": "pass",
+        "padding": "pass",
+        "generatedGlow": false,
+        "blankPages": true
+      }
+    },
+    {
+      "id": "constellation-streak-v1-chroma",
+      "type": "generation-source",
+      "status": "approved",
+      "path": "source/constellation-streak-v1-chroma.png",
+      "prompt": "prompts/constellation-streak-v1.md",
+      "references": ["style-master-v1", "constellation-diligent-v1"],
+      "dimensions": [1254, 1254],
+      "mode": "RGB",
+      "sha256": "269bf98a32e2c68102a773a497874532266429c72a3c503b36672dbcf2dbe15c",
+      "notes": "无外发光的品红底实体源图。"
+    },
+    {
+      "id": "constellation-streak-v1",
+      "type": "constellation",
+      "constellation": "streak",
+      "status": "production",
+      "path": "constellations/streak-v1.png",
+      "source": "constellation-streak-v1-chroma",
+      "dimensions": [1024, 1024],
+      "contentBbox": [232, 102, 808, 864],
+      "mode": "RGBA",
+      "sha256": "d3c5dbfbc070db654df8915c991d8467b0ec4c2a1631f831ca7762f7628f676f",
+      "processing": {
+        "method": "remove_chroma_key.py",
+        "autoKey": "border",
+        "softMatte": true,
+        "despill": true,
+        "edgeContract": 1,
+        "deliveryResize": [1024, 1024],
+        "contentScale": [976, 976]
+      },
+      "qa": {
+        "alphaChannel": true,
+        "transparentCorners": true,
+        "edgeFringe": "pass",
+        "padding": "pass",
+        "generatedGlow": false,
+        "floatingEmbers": false
+      }
+    },
+    {
+      "id": "constellation-accuracy-v1-chroma",
+      "type": "generation-source",
+      "status": "approved",
+      "path": "source/constellation-accuracy-v1-chroma.png",
+      "prompt": "prompts/constellation-accuracy-v1.md",
+      "references": ["style-master-v1", "constellation-diligent-v1"],
+      "dimensions": [1536, 1024],
+      "mode": "RGB",
+      "sha256": "fd7e5f3d8b511835af0efb07a655090fb5b3d0545159983ddc494657a404e1d4",
+      "notes": "无外发光的品红底实体源图;生成源为横向画布。"
+    },
+    {
+      "id": "constellation-accuracy-v1",
+      "type": "constellation",
+      "constellation": "accuracy",
+      "status": "production",
+      "path": "constellations/accuracy-v1.png",
+      "source": "constellation-accuracy-v1-chroma",
+      "dimensions": [1024, 1024],
+      "contentBbox": [133, 240, 891, 783],
+      "mode": "RGBA",
+      "sha256": "d68f51d8a8a8db984d5eb3c9e9322bb6d288e3e393885e42723603e6aee988e7",
+      "processing": {
+        "method": "remove_chroma_key.py",
+        "autoKey": "border",
+        "softMatte": true,
+        "despill": true,
+        "edgeContract": 1,
+        "normalizer": "scripts/normalize-star-map-asset.py",
+        "deliveryResize": [1024, 1024],
+        "occupancy": 0.74,
+        "preserveAspectRatio": true
+      },
+      "qa": {
+        "alphaChannel": true,
+        "transparentCorners": true,
+        "edgeFringe": "pass",
+        "padding": "pass",
+        "generatedGlow": false,
+        "childSafeArrow": true,
+        "targetHasNumbers": false
+      }
+    },
+    {
+      "id": "constellation-summit-v1-chroma",
+      "type": "generation-source",
+      "status": "approved",
+      "path": "source/constellation-summit-v1-chroma.png",
+      "prompt": "prompts/constellation-summit-v1.md",
+      "references": ["style-master-v1", "constellation-start-v1"],
+      "dimensions": [1254, 1254],
+      "mode": "RGB",
+      "sha256": "87967bd8fba57cd82bbda2d56acee9653848d26bae21372d9e26f9166f5e6b4f",
+      "notes": "无外发光的品红底实体源图。"
+    },
+    {
+      "id": "constellation-summit-v1",
+      "type": "constellation",
+      "constellation": "summit",
+      "status": "production",
+      "path": "constellations/summit-v1.png",
+      "source": "constellation-summit-v1-chroma",
+      "dimensions": [1024, 1024],
+      "contentBbox": [218, 133, 806, 891],
+      "mode": "RGBA",
+      "sha256": "9a081d90ba8f8b120996ea50e1c68fbec7680e2577c3e9e445158911b49fcb20",
+      "processing": {
+        "method": "remove_chroma_key.py",
+        "autoKey": "border",
+        "softMatte": true,
+        "despill": true,
+        "edgeContract": 1,
+        "normalizer": "scripts/normalize-star-map-asset.py",
+        "deliveryResize": [1024, 1024],
+        "occupancy": 0.74,
+        "preserveAspectRatio": true
+      },
+      "qa": {
+        "alphaChannel": true,
+        "transparentCorners": true,
+        "edgeFringe": "pass",
+        "padding": "pass",
+        "generatedGlow": false,
+        "summitStarTouchesPeak": true
+      }
+    },
+    {
+      "id": "constellation-structure-v1-chroma",
+      "type": "generation-source",
+      "status": "rejected",
+      "path": "source/constellation-structure-v1-chroma.png",
+      "prompt": "prompts/constellation-structure-v1.md",
+      "references": ["style-master-v1", "constellation-summit-v1"],
+      "dimensions": [1254, 1254],
+      "mode": "RGB",
+      "sha256": "944102467e761d05993b4e1ec1b36bb23462f10f22e0908720d0a7fb7c1a380c",
+      "notes": "仅生成4张句型卡,不符合5种句型定义。"
+    },
+    {
+      "id": "constellation-structure-v2-chroma",
+      "type": "generation-source",
+      "status": "rejected",
+      "path": "source/constellation-structure-v2-chroma.png",
+      "prompt": "prompts/constellation-structure-v2.md",
+      "references": ["style-master-v1", "constellation-structure-v1-chroma"],
+      "dimensions": [1254, 1254],
+      "mode": "RGB",
+      "sha256": "4d951cd7b6ff3581528cd8d9b10fd5278e961de6227dbb0923d799c4c28a79a6",
+      "notes": "卡片数量与构图正确,但洋红背景与紫色卡片过近,无法稳定抠图。"
+    },
+    {
+      "id": "constellation-structure-v2-magenta-key-rejected",
+      "type": "review-rejected",
+      "status": "rejected",
+      "path": "review/constellation-structure-v2-magenta-key-rejected.png",
+      "source": "constellation-structure-v2-chroma",
+      "dimensions": [1024, 1024],
+      "contentBbox": [135, 133, 889, 891],
+      "mode": "RGBA",
+      "sha256": "e29edd25001ad0e86bf98793300dcbb239480ae3e74944f31c1dbc7f24413e75",
+      "qa": {
+        "alphaChannel": true,
+        "transparentCorners": true,
+        "subjectOpacity": "fail",
+        "violetCardAlphaAtCenter": 125,
+        "indigoCardAlphaAtCenter": 226
+      },
+      "notes": "主体内部被误抠除,不得用于产品。"
+    },
+    {
+      "id": "constellation-structure-v3-chroma",
+      "type": "generation-source",
+      "status": "approved",
+      "path": "source/constellation-structure-v3-chroma.png",
+      "prompt": "prompts/constellation-structure-v3.md",
+      "references": ["style-master-v1", "constellation-structure-v2-chroma"],
+      "dimensions": [1254, 1254],
+      "mode": "RGB",
+      "sha256": "f9306b0fd184db245db993bf66b83ad3e533d12ff52303cb7b83bf5ce68c41eb",
+      "notes": "保留 V2 的正确五卡构图,仅改为与主体不冲突的绿色抠图底。"
+    },
+    {
+      "id": "constellation-structure-v1",
+      "type": "constellation",
+      "constellation": "structure",
+      "status": "production",
+      "path": "constellations/structure-v1.png",
+      "source": "constellation-structure-v3-chroma",
+      "dimensions": [1024, 1024],
+      "contentBbox": [135, 133, 889, 891],
+      "mode": "RGBA",
+      "sha256": "134473c8eb35794f129c4be3d2898cbabb596d82e473f88a7fa7d2cf00e7740c",
+      "processing": {
+        "method": "remove_chroma_key.py",
+        "autoKey": "border",
+        "softMatte": true,
+        "despill": true,
+        "edgeContract": 1,
+        "normalizer": "scripts/normalize-star-map-asset.py",
+        "deliveryResize": [1024, 1024],
+        "occupancy": 0.74,
+        "preserveAspectRatio": true
+      },
+      "qa": {
+        "alphaChannel": true,
+        "transparentCorners": true,
+        "edgeFringe": "pass",
+        "padding": "pass",
+        "generatedGlow": false,
+        "cardCount": 5,
+        "cardInteriorsOpaque": true,
+        "centralStarCutout": true
+      }
+    },
+    {
+      "id": "constellation-explore-v1-chroma",
+      "type": "generation-source",
+      "status": "rejected",
+      "path": "source/constellation-explore-v1-chroma.png",
+      "prompt": "prompts/constellation-explore-v1.md",
+      "references": ["style-master-v1", "constellation-structure-v1"],
+      "dimensions": [1254, 1254],
+      "mode": "RGB",
+      "sha256": "ae9a3d9dfb556cbaf3016faf2e1f8bbf36c75834334a5be2ce6a2423a0f808ae",
+      "notes": "语义正确但写实材质和细节过多,与前六个图腾不属于同一轻量插画家族。"
+    },
+    {
+      "id": "constellation-explore-v1-overrendered-rejected",
+      "type": "review-rejected",
+      "status": "rejected",
+      "path": "review/constellation-explore-v1-overrendered-rejected.png",
+      "source": "constellation-explore-v1-chroma",
+      "dimensions": [1024, 1024],
+      "contentBbox": [206, 133, 817, 891],
+      "mode": "RGBA",
+      "sha256": "86e55d887b51b8c8a859db500a7cd97746ca46adaf4cd2eaa8ccb01fbfa9becd",
+      "qa": {
+        "alphaChannel": true,
+        "transparentCorners": true,
+        "familyStyle": "fail"
+      },
+      "notes": "家族接触表中视觉重量过高,不得用于产品。"
+    },
+    {
+      "id": "constellation-explore-v2-chroma",
+      "type": "generation-source",
+      "status": "approved",
+      "path": "source/constellation-explore-v2-chroma.png",
+      "prompt": "prompts/constellation-explore-v2.md",
+      "references": ["constellation-diligent-v1", "constellation-explore-v1-chroma"],
+      "dimensions": [1254, 1254],
+      "mode": "RGB",
+      "sha256": "e55d91e05f7db267c78a9356f911e8fdb9e01bedd7f229f08099b8ec740e1585",
+      "notes": "按勤学座统一为宽形、少层级、轻量 2.5D 插画。"
+    },
+    {
+      "id": "constellation-explore-v1",
+      "type": "constellation",
+      "constellation": "explore",
+      "status": "production",
+      "path": "constellations/explore-v1.png",
+      "source": "constellation-explore-v2-chroma",
+      "dimensions": [1024, 1024],
+      "contentBbox": [211, 133, 813, 891],
+      "mode": "RGBA",
+      "sha256": "e39784597cac911318fcd5f7372700c2afe3c9a2309f671136ed63ab842223e1",
+      "processing": {
+        "method": "remove_chroma_key.py",
+        "autoKey": "border",
+        "softMatte": true,
+        "despill": true,
+        "edgeContract": 1,
+        "normalizer": "scripts/normalize-star-map-asset.py",
+        "deliveryResize": [1024, 1024],
+        "occupancy": 0.74,
+        "preserveAspectRatio": true
+      },
+      "qa": {
+        "alphaChannel": true,
+        "transparentCorners": true,
+        "edgeFringe": "pass",
+        "padding": "pass",
+        "generatedGlow": false,
+        "subjectInteriorsOpaque": true,
+        "telescopeDominant": true,
+        "compassIntegrated": true,
+        "familyStyle": "pass"
+      }
+    },
+    {
+      "id": "constellation-fun-v1-chroma",
+      "type": "generation-source",
+      "status": "rejected",
+      "path": "source/constellation-fun-v1-chroma.png",
+      "prompt": "prompts/constellation-fun-v1.md",
+      "references": ["style-master-v1", "constellation-explore-v1"],
+      "dimensions": [1254, 1254],
+      "mode": "RGB",
+      "sha256": "11d1bf155f41cf544d3530a5e1c90e27261f2dcf678224f66cfb725073f54573",
+      "notes": "语义正确但层叠细节与体积高光过多,家族视觉重量不一致。"
+    },
+    {
+      "id": "constellation-fun-v1-overrendered-rejected",
+      "type": "review-rejected",
+      "status": "rejected",
+      "path": "review/constellation-fun-v1-overrendered-rejected.png",
+      "source": "constellation-fun-v1-chroma",
+      "dimensions": [1024, 1024],
+      "contentBbox": [184, 133, 840, 891],
+      "mode": "RGBA",
+      "sha256": "8833eb24d3b12133e16edb0debd10a2ef330310f2d14422a27ee72a9810eb5f5",
+      "qa": {
+        "alphaChannel": true,
+        "transparentCorners": true,
+        "familyStyle": "fail"
+      },
+      "notes": "家族接触表中层级过密、视觉重量过高,不得用于产品。"
+    },
+    {
+      "id": "constellation-fun-v2-chroma",
+      "type": "generation-source",
+      "status": "approved",
+      "path": "source/constellation-fun-v2-chroma.png",
+      "prompt": "prompts/constellation-fun-v2.md",
+      "references": ["constellation-diligent-v1", "constellation-fun-v1-chroma"],
+      "dimensions": [1254, 1254],
+      "mode": "RGB",
+      "sha256": "5f2b7ddc4483fcc90a9a85a90cec7e52158a4bf045c7d893e712eb65c5b05be4",
+      "notes": "按勤学座统一为宽形、少高光、轻量 2.5D 插画。"
+    },
+    {
+      "id": "constellation-fun-v1",
+      "type": "constellation",
+      "constellation": "fun",
+      "status": "production",
+      "path": "constellations/fun-v1.png",
+      "source": "constellation-fun-v2-chroma",
+      "dimensions": [1024, 1024],
+      "contentBbox": [149, 133, 874, 891],
+      "mode": "RGBA",
+      "sha256": "817805c801f2993dcf8c1f44e44ac5c0f00411787aee43009d01c1aad2a60d69",
+      "processing": {
+        "method": "remove_chroma_key.py",
+        "autoKey": "border",
+        "softMatte": true,
+        "despill": true,
+        "edgeContract": 1,
+        "normalizer": "scripts/normalize-star-map-asset.py",
+        "deliveryResize": [1024, 1024],
+        "occupancy": 0.74,
+        "preserveAspectRatio": true
+      },
+      "qa": {
+        "alphaChannel": true,
+        "transparentCorners": true,
+        "edgeFringe": "pass",
+        "padding": "pass",
+        "generatedGlow": false,
+        "subjectInteriorsOpaque": true,
+        "singleCentralSparkle": true,
+        "solidLayeredNebula": true,
+        "familyStyle": "pass"
+      }
+    },
+    {
+      "id": "constellations-v1-overrendered-rejected",
+      "type": "review-contact-sheet",
+      "status": "rejected",
+      "path": "review/constellations-v1-overrendered-rejected.png",
+      "dimensions": [2048, 1100],
+      "mode": "RGB",
+      "sha256": "028f07b739b5ba8e3753ea53b1d33c0fb3e1e1c80923dedb9a83ed4b915c246e",
+      "notes": "发现探索座与奇趣星云视觉重量和细节密度高于其余图腾,触发 V2 重制。"
+    },
+    {
+      "id": "constellations-v2-contact-sheet",
+      "type": "review-contact-sheet",
+      "status": "approved",
+      "path": "review/constellations-v2-contact-sheet.png",
+      "dimensions": [2048, 1100],
+      "mode": "RGB",
+      "sha256": "01e77d7bb40693fc860233d01e649b22536928c2d9277b237d654589a5ac9fcd",
+      "notes": "8 个主题图腾在尺寸占比、描边、渐变层级、视觉重量与语义区分上验收通过。"
+    },
+    {
+      "id": "star-start-batch-v1-chroma",
+      "type": "generation-batch-source",
+      "status": "approved",
+      "path": "source/star-start-batch-v1-chroma.png",
+      "prompt": "prompts/star-start-batch-v1.md",
+      "references": ["rarity-common-base-v1", "rarity-rare-base-v1", "constellation-diligent-v1"],
+      "dimensions": [1774, 887],
+      "mode": "RGB",
+      "sha256": "dc9f929ee2c641a3e9d82ed8d68f7ec0fc2d91c4daba71fb061334f11079ce8d",
+      "notes": "启程座 1×3 批量生成源,按三等分切图。"
+    },
+    {
+      "id": "star-start-first-q-v1-chroma",
+      "type": "generation-source",
+      "status": "approved",
+      "path": "source/star-start-first-q-v1-chroma.png",
+      "batchSource": "star-start-batch-v1-chroma",
+      "gridCell": [0, 0, 591, 887],
+      "dimensions": [591, 887],
+      "mode": "RGB",
+      "sha256": "4e1a5f73cd89dc2b6eb1699a0a33d7c87e454e643d115e2f6651545cebddd7f8"
+    },
+    {
+      "id": "star-start-first-q-v1",
+      "type": "star",
+      "starKey": "start.first_q",
+      "rarity": "common",
+      "status": "production",
+      "path": "stars/start-first-q-v1.png",
+      "source": "star-start-first-q-v1-chroma",
+      "dimensions": [1024, 1024],
+      "contentBbox": [143, 152, 880, 872],
+      "mode": "RGBA",
+      "sha256": "501c87327f7be4326a0f1186d50637e39cb600dcf38eb1c2b4124d3045954dfc",
+      "processing": {
+        "slice": "scripts/slice-star-map-sheet.py",
+        "method": "remove_chroma_key.py",
+        "autoKey": "border",
+        "softMatte": true,
+        "despill": true,
+        "edgeContract": 1,
+        "normalizer": "scripts/normalize-star-map-asset.py",
+        "occupancy": 0.72,
+        "preserveAspectRatio": true
+      },
+      "qa": {"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"two-leaf sprout","familyStyle":"pass"}
+    },
+    {
+      "id": "star-start-first-checkin-v1-chroma",
+      "type": "generation-source",
+      "status": "approved",
+      "path": "source/star-start-first-checkin-v1-chroma.png",
+      "batchSource": "star-start-batch-v1-chroma",
+      "gridCell": [591, 0, 1183, 887],
+      "dimensions": [592, 887],
+      "mode": "RGB",
+      "sha256": "a77ff30cc7487491989e73d01ffbc5dc22b26e646561cd5d6d73aeffa52e8c3e"
+    },
+    {
+      "id": "star-start-first-checkin-v1",
+      "type": "star",
+      "starKey": "start.first_checkin",
+      "rarity": "common",
+      "status": "production",
+      "path": "stars/start-first-checkin-v1.png",
+      "source": "star-start-first-checkin-v1-chroma",
+      "dimensions": [1024, 1024],
+      "contentBbox": [143, 150, 880, 873],
+      "mode": "RGBA",
+      "sha256": "f5bf4d31081727c7289a927623aacd93c339fa593a6eea2008fc5b147db4a7ed",
+      "processing": {
+        "slice": "scripts/slice-star-map-sheet.py",
+        "method": "remove_chroma_key.py",
+        "autoKey": "border",
+        "softMatte": true,
+        "despill": true,
+        "edgeContract": 1,
+        "normalizer": "scripts/normalize-star-map-asset.py",
+        "occupancy": 0.72,
+        "preserveAspectRatio": true
+      },
+      "qa": {"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"blank calendar with checkmark","familyStyle":"pass"}
+    },
+    {
+      "id": "star-start-first-perfect-v1-chroma",
+      "type": "generation-source",
+      "status": "approved",
+      "path": "source/star-start-first-perfect-v1-chroma.png",
+      "batchSource": "star-start-batch-v1-chroma",
+      "gridCell": [1183, 0, 1774, 887],
+      "dimensions": [591, 887],
+      "mode": "RGB",
+      "sha256": "ee1fb79324c55a2e7f29935de5356a189b4348430fb907131cbd47c213315228"
+    },
+    {
+      "id": "star-start-first-perfect-v1",
+      "type": "star",
+      "starKey": "start.first_perfect",
+      "rarity": "rare",
+      "status": "production",
+      "path": "stars/start-first-perfect-v1.png",
+      "source": "star-start-first-perfect-v1-chroma",
+      "dimensions": [1024, 1024],
+      "contentBbox": [143, 148, 880, 876],
+      "mode": "RGBA",
+      "sha256": "7ab93bb22d26f085a7bc943ab8d77ea4f1d56983e3dcd82757d4cad21cc1f1e0",
+      "processing": {
+        "slice": "scripts/slice-star-map-sheet.py",
+        "method": "remove_chroma_key.py",
+        "autoKey": "border",
+        "softMatte": true,
+        "despill": true,
+        "edgeContract": 1,
+        "normalizer": "scripts/normalize-star-map-asset.py",
+        "occupancy": 0.72,
+        "preserveAspectRatio": true
+      },
+      "qa": {"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"nested perfect star","familyStyle":"pass"}
+    },
+    {
+      "id": "stars-start-v1-contact-sheet",
+      "type": "review-contact-sheet",
+      "status": "approved",
+      "path": "review/stars-start-v1-contact-sheet.png",
+      "dimensions": [1536, 560],
+      "mode": "RGB",
+      "sha256": "8badf772c3dbc7f6f97ad9eb493b2847f9c224fb35580fb74e68855b77dbbbf2",
+      "notes": "启程座三枚星标的尺寸、内边距、稀有度、语义与家族风格验收通过。"
+    },
+    {
+      "id": "star-diligent-batch-v1-chroma",
+      "type": "generation-batch-source",
+      "status": "approved",
+      "path": "source/star-diligent-batch-v1-chroma.png",
+      "prompt": "prompts/star-diligent-batch-v1.md",
+      "references": ["rarity-common-base-v1", "rarity-rare-base-v1", "rarity-epic-base-v1", "rarity-legendary-base-v1", "stars-start-v1-contact-sheet"],
+      "dimensions": [1254, 1254],
+      "mode": "RGB",
+      "sha256": "cef92f99347d7c05f19e64d82f4a97547c107a5a1b4047dcf039a30a37d8231c",
+      "notes": "勤学座 2×2 批量生成源,按四象限切图。"
+    },
+    {
+      "id":"star-diligent-10-v1-chroma","type":"generation-source","status":"approved","path":"source/star-diligent-10-v1-chroma.png","batchSource":"star-diligent-batch-v1-chroma","gridCell":[0,0,627,627],"dimensions":[627,627],"mode":"RGB","sha256":"727c4652763d576b3000caae4f63fb658f42daaaf344428b3bbbcfc033f451cf"
+    },
+    {
+      "id":"star-diligent-10-v1","type":"star","starKey":"diligent.10","rarity":"common","status":"production","path":"stars/diligent-10-v1.png","source":"star-diligent-10-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,154,880,870],"mode":"RGBA","sha256":"9b6a495caa4154a26de99493e061e0e4d68cb366ccc0ddd11a2eecc3e319b453","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"closed book","familyStyle":"pass"}
+    },
+    {
+      "id":"star-diligent-50-v1-chroma","type":"generation-source","status":"approved","path":"source/star-diligent-50-v1-chroma.png","batchSource":"star-diligent-batch-v1-chroma","gridCell":[627,0,1254,627],"dimensions":[627,627],"mode":"RGB","sha256":"39b0a374962b3450391f8d46d5c8db02f485bd25f32ff6b110bc2124a5d195e1"
+    },
+    {
+      "id":"star-diligent-50-v1","type":"star","starKey":"diligent.50","rarity":"rare","status":"production","path":"stars/diligent-50-v1.png","source":"star-diligent-50-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,153,880,871],"mode":"RGBA","sha256":"916ad6fc32ed8613d387135fcddcc94653b13de9699c8fd3012a0b1c188138e8","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"three-book stack","familyStyle":"pass"}
+    },
+    {
+      "id":"star-diligent-100-v1-chroma","type":"generation-source","status":"approved","path":"source/star-diligent-100-v1-chroma.png","batchSource":"star-diligent-batch-v1-chroma","gridCell":[0,627,627,1254],"dimensions":[627,627],"mode":"RGB","sha256":"bf774da21c896af8fa383b6b036d8b44892b89baf382339bf1bedbabf1cc0271"
+    },
+    {
+      "id":"star-diligent-100-v1","type":"star","starKey":"diligent.100","rarity":"epic","status":"production","path":"stars/diligent-100-v1.png","source":"star-diligent-100-v1-chroma","dimensions":[1024,1024],"contentBbox":[148,143,876,880],"mode":"RGBA","sha256":"37b2cc3334147c1a43440fa6b618f0c33fedccaf72624b50b5f9773472bf55a6","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"scroll with three checks","familyStyle":"pass"}
+    },
+    {
+      "id":"star-diligent-500-v1-chroma","type":"generation-source","status":"approved","path":"source/star-diligent-500-v1-chroma.png","batchSource":"star-diligent-batch-v1-chroma","gridCell":[627,627,1254,1254],"dimensions":[627,627],"mode":"RGB","sha256":"f508cd2bdb0aeff0fe4f1d3b0041caf9327571568eb0cb5466bfcf74b0646be3"
+    },
+    {
+      "id":"star-diligent-500-v1","type":"star","starKey":"diligent.500","rarity":"legendary","status":"production","path":"stars/diligent-500-v1.png","source":"star-diligent-500-v1-chroma","dimensions":[1024,1024],"contentBbox":[145,143,878,880],"mode":"RGBA","sha256":"987cf78d2414f5c1ed3ea04f98466404b02a92c2fec2b18a08cee6c7672736f9","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"book sailboat on wave","familyStyle":"pass"}
+    },
+    {
+      "id":"stars-diligent-v1-contact-sheet","type":"review-contact-sheet","status":"approved","path":"review/stars-diligent-v1-contact-sheet.png","dimensions":[1100,1100],"mode":"RGB","sha256":"d936bedc9ed490c5f7a1332d0ad99eb87ef0358061194802241359cf155c056a","notes":"勤学座四枚星标的尺寸、内边距、四档稀有度、语义与家族风格验收通过。"
+    },
+    {
+      "id":"star-streak-batch-v1-chroma","type":"generation-batch-source","status":"rejected","path":"source/star-streak-batch-v1-chroma.png","prompt":"prompts/star-streak-batch-v1.md","references":["stars-diligent-v1-contact-sheet"],"dimensions":[1254,1254],"mode":"RGB","sha256":"69752b95c77ab61be4bd3edc9fe58f20fd3e23313a35538f20f10fc864582607","notes":"七日火焰日历误生成 8 个圆点,未采用。"
+    },
+    {
+      "id":"star-streak-batch-v2-chroma","type":"generation-batch-source","status":"approved","path":"source/star-streak-batch-v2-chroma.png","prompt":"prompts/star-streak-batch-v2.md","references":["star-streak-batch-v1-chroma"],"dimensions":[1254,1254],"mode":"RGB","sha256":"60fef6a1288064c865ffebfd88c48641392855451ecc6d75d7ea6661790aca53","notes":"仅修正日历圆点为严格 7 个,其余构图保持。"
+    },
+    {
+      "id":"star-streak-3-v1-chroma","type":"generation-source","status":"approved","path":"source/star-streak-3-v1-chroma.png","batchSource":"star-streak-batch-v2-chroma","gridCell":[0,0,627,627],"dimensions":[627,627],"mode":"RGB","sha256":"46f6bdb49b1e492f74b46469146e43bee979d3a10c495119f443ddd9039c327b"
+    },
+    {
+      "id":"star-streak-3-v1","type":"star","starKey":"streak.3","rarity":"common","status":"production","path":"stars/streak-3-v1.png","source":"star-streak-3-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,147,880,876],"mode":"RGBA","sha256":"baa76964050c5b790e5d8f02e61a548fe5d90e5076232b41c35c9697eb9a38db","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"two-layer ember","familyStyle":"pass"}
+    },
+    {
+      "id":"star-streak-7-v1-chroma","type":"generation-source","status":"approved","path":"source/star-streak-7-v1-chroma.png","batchSource":"star-streak-batch-v2-chroma","gridCell":[627,0,1254,627],"dimensions":[627,627],"mode":"RGB","sha256":"2c8073e151e966c7869025e8bd7a5c621c9e9c54fe5919994c83e34944049f67"
+    },
+    {
+      "id":"star-streak-7-v1","type":"star","starKey":"streak.7","rarity":"rare","status":"production","path":"stars/streak-7-v1.png","source":"star-streak-7-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,148,880,876],"mode":"RGBA","sha256":"75a05db033d0385a2ebd8ba3ee19f8f678efa7171525ab6fb17b78bcd5e5973a","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"flame calendar with seven dots","dotCount":7,"familyStyle":"pass"}
+    },
+    {
+      "id":"star-streak-14-v1-chroma","type":"generation-source","status":"approved","path":"source/star-streak-14-v1-chroma.png","batchSource":"star-streak-batch-v2-chroma","gridCell":[0,627,627,1254],"dimensions":[627,627],"mode":"RGB","sha256":"5740ff783dab32669d49c523af39926d05e90fa7ad628b35e9b73d49195c2c74"
+    },
+    {
+      "id":"star-streak-14-v1","type":"star","starKey":"streak.14","rarity":"epic","status":"production","path":"stars/streak-14-v1.png","source":"star-streak-14-v1-chroma","dimensions":[1024,1024],"contentBbox":[150,143,873,880],"mode":"RGBA","sha256":"51a284bc90787765710f3fab2c9f45fc126800821474ddd34bb25c532f329eeb","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"campfire with two logs","familyStyle":"pass"}
+    },
+    {
+      "id":"star-streak-30-v1-chroma","type":"generation-source","status":"approved","path":"source/star-streak-30-v1-chroma.png","batchSource":"star-streak-batch-v2-chroma","gridCell":[627,627,1254,1254],"dimensions":[627,627],"mode":"RGB","sha256":"ff9f2724cf1968cde3ce5475a0376868bd4d26e6ac58a243b23b29dd16512e35"
+    },
+    {
+      "id":"star-streak-30-v1","type":"star","starKey":"streak.30","rarity":"legendary","status":"production","path":"stars/streak-30-v1.png","source":"star-streak-30-v1-chroma","dimensions":[1024,1024],"contentBbox":[156,143,867,880],"mode":"RGBA","sha256":"9a5b07f497a849d50ce3dd3e0062dcc6087cc176c534409167860768e97d7f50","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"indigo flame crystal","familyStyle":"pass"}
+    },
+    {
+      "id":"stars-streak-v1-contact-sheet","type":"review-contact-sheet","status":"approved","path":"review/stars-streak-v1-contact-sheet.png","dimensions":[1100,1100],"mode":"RGB","sha256":"e20f026e82a74da1f662e0a0051170af3db756470add41a18e36e894ebc29bdf","notes":"恒心座四枚星标的尺寸、内边距、四档稀有度、语义、七日计数与家族风格验收通过。"
+    },
+    {
+      "id":"star-accuracy-batch-v1-chroma","type":"generation-batch-source","status":"approved","path":"source/star-accuracy-batch-v1-chroma.png","prompt":"prompts/star-accuracy-batch-v1.md","references":["stars-streak-v1-contact-sheet"],"dimensions":[1774,887],"mode":"RGB","sha256":"1420ba8064b4aa2dfd5d8ecdfe72c2aa83586998fac2738e329a00e3afaa1c6b","notes":"神射座 1×3 批量生成源,按三等分切图。"
+    },
+    {
+      "id":"star-accuracy-perfect10-v1-chroma","type":"generation-source","status":"approved","path":"source/star-accuracy-perfect10-v1-chroma.png","batchSource":"star-accuracy-batch-v1-chroma","gridCell":[0,0,591,887],"dimensions":[591,887],"mode":"RGB","sha256":"407ad1651bdae31bc0e5cc276f8198bcae383445a45e053c8d11b3fe7040e6cd"
+    },
+    {
+      "id":"star-accuracy-perfect10-v1","type":"star","starKey":"accuracy.perfect10","rarity":"rare","status":"production","path":"stars/accuracy-perfect10-v1.png","source":"star-accuracy-perfect10-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,151,880,873],"mode":"RGBA","sha256":"f5fe5a4fdc10e85c46f04ccdba6ef0337b500b41314c3e69b20806e2a8e41d10","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"bullseye with one arrow","arrowCount":1,"familyStyle":"pass"}
+    },
+    {
+      "id":"star-accuracy-perfect50-v1-chroma","type":"generation-source","status":"approved","path":"source/star-accuracy-perfect50-v1-chroma.png","batchSource":"star-accuracy-batch-v1-chroma","gridCell":[591,0,1183,887],"dimensions":[592,887],"mode":"RGB","sha256":"7deba648126664e1b33963005ed389d15cee989b9ec2dc604045bb06fcf29dd3"
+    },
+    {
+      "id":"star-accuracy-perfect50-v1","type":"star","starKey":"accuracy.perfect50","rarity":"epic","status":"production","path":"stars/accuracy-perfect50-v1.png","source":"star-accuracy-perfect50-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,147,880,876],"mode":"RGBA","sha256":"d440e355687e221d919caa42fcf704cd59c9a40200fe20359473850a9ac1ef8d","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"bullseye with perfect sparkle","arrowCount":0,"familyStyle":"pass"}
+    },
+    {
+      "id":"star-accuracy-streak5-v1-chroma","type":"generation-source","status":"approved","path":"source/star-accuracy-streak5-v1-chroma.png","batchSource":"star-accuracy-batch-v1-chroma","gridCell":[1183,0,1774,887],"dimensions":[591,887],"mode":"RGB","sha256":"e0430402bdabadf3925d5293596deac537c41364563134484d7f62a27b8aa32c"
+    },
+    {
+      "id":"star-accuracy-streak5-v1","type":"star","starKey":"accuracy.streak5","rarity":"epic","status":"production","path":"stars/accuracy-streak5-v1.png","source":"star-accuracy-streak5-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,147,880,876],"mode":"RGBA","sha256":"5d2ac333556119d05503d76818dd9066460cf983d6aee2e67b900e53b1307248","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"five-arrow fan","arrowCount":5,"familyStyle":"pass"}
+    },
+    {
+      "id":"stars-accuracy-v1-contact-sheet","type":"review-contact-sheet","status":"approved","path":"review/stars-accuracy-v1-contact-sheet.png","dimensions":[1536,560],"mode":"RGB","sha256":"4c8db9628c429e5b73b12349ee079f94a782caf68f1aecfc49131e9b95908bfb","notes":"神射座三枚星标的尺寸、内边距、稀有度、箭数、语义与家族风格验收通过。"
+    },
+    {
+      "id":"star-summit-batch-v1-chroma","type":"generation-batch-source","status":"approved","path":"source/star-summit-batch-v1-chroma.png","prompt":"prompts/star-summit-batch-v1.md","references":["stars-accuracy-v1-contact-sheet"],"dimensions":[1774,887],"mode":"RGB","sha256":"df4e400065f21e40d0e94bf69be58d51a20cb4b26d040edb7043dbb2d046d789","notes":"登峰座 1×3 批量生成源,按三等分切图。"
+    },
+    {
+      "id":"star-summit-inter-v1-chroma","type":"generation-source","status":"approved","path":"source/star-summit-inter-v1-chroma.png","batchSource":"star-summit-batch-v1-chroma","gridCell":[0,0,591,887],"dimensions":[591,887],"mode":"RGB","sha256":"71dacfb9cdb9167f5d2f5d4f81b9fd01bbd68f6e091dc68e34c898f4b2fae5cc"
+    },
+    {
+      "id":"star-summit-inter-v1","type":"star","starKey":"summit.inter","rarity":"rare","status":"production","path":"stars/summit-inter-v1.png","source":"star-summit-inter-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,150,880,873],"mode":"RGBA","sha256":"d1aac5a5f1fc0f75b114bb8f5bf3e885a7ea61edac04638a0734323d4e31a904","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"two-step hill with flag","familyStyle":"pass"}
+    },
+    {
+      "id":"star-summit-adv-v1-chroma","type":"generation-source","status":"approved","path":"source/star-summit-adv-v1-chroma.png","batchSource":"star-summit-batch-v1-chroma","gridCell":[591,0,1183,887],"dimensions":[592,887],"mode":"RGB","sha256":"b711b2df81599ee85794270cee51bc32b27f9d2b9cef5878395740ef35f5c96a"
+    },
+    {
+      "id":"star-summit-adv-v1","type":"star","starKey":"summit.adv","rarity":"epic","status":"production","path":"stars/summit-adv-v1.png","source":"star-summit-adv-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,149,880,875],"mode":"RGBA","sha256":"c1af9897c2b8461b7053a1320d4afcbc563dabfc2a28d5428a34feeab2c50b1b","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"snow-capped mountain","familyStyle":"pass"}
+    },
+    {
+      "id":"star-summit-adv20-v1-chroma","type":"generation-source","status":"approved","path":"source/star-summit-adv20-v1-chroma.png","batchSource":"star-summit-batch-v1-chroma","gridCell":[1183,0,1774,887],"dimensions":[591,887],"mode":"RGB","sha256":"50a100646a9de1706caa2ab0134cc8b08b8b5da3fcec2df3e61809f0c864a2c0"
+    },
+    {
+      "id":"star-summit-adv20-v1","type":"star","starKey":"summit.adv20","rarity":"legendary","status":"production","path":"stars/summit-adv20-v1.png","source":"star-summit-adv20-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,150,880,874],"mode":"RGBA","sha256":"f218db8a7cd6d2baa785031bc4d9963fe1993ae2708aca9dc11e68ba78490f54","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"crowned snow peak","familyStyle":"pass"}
+    },
+    {
+      "id":"stars-summit-v1-contact-sheet","type":"review-contact-sheet","status":"approved","path":"review/stars-summit-v1-contact-sheet.png","dimensions":[1536,560],"mode":"RGB","sha256":"a4b5f529f6f30043d13a03c959a52264f7553972079f663dda3abbdf7019acb4","notes":"登峰座三枚星标的尺寸、内边距、稀有度、山势升级语义与家族风格验收通过。"
+    },
+    {
+      "id":"star-structure-batch-v1-chroma","type":"generation-batch-source","status":"approved","path":"source/star-structure-batch-v1-chroma.png","prompt":"prompts/star-structure-batch-v1.md","references":["stars-summit-v1-contact-sheet","constellation-structure-v1"],"dimensions":[1672,941],"mode":"RGB","sha256":"cc6410a331bd7f6ac160d9a010a0b9ba95a1a1f19c963548f121ea16c9a98aed","notes":"句型座 3×2 批量源,五枚占前五格,第六格为空并跳过。"
+    },
+    {
+      "id":"star-structure-sv-v1-chroma","type":"generation-source","status":"approved","path":"source/star-structure-sv-v1-chroma.png","batchSource":"star-structure-batch-v1-chroma","gridCell":[0,0,557,470],"dimensions":[557,470],"mode":"RGB","sha256":"ab0654c543945ab23c64f4b379672e87551f050e049e73bdac3af2ddf2c8815d"
+    },
+    {
+      "id":"star-structure-sv-v1","type":"star","starKey":"structure.sv","rarity":"common","status":"production","path":"stars/structure-sv-v1.png","source":"star-structure-sv-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,154,880,869],"mode":"RGBA","sha256":"08a53449744963189df9f007e71c9a378d9ea57a115eb12cbdecf8e8768d90ca","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","slotCount":2,"embeddedText":false,"familyStyle":"pass"}
+    },
+    {
+      "id":"star-structure-svo-v1-chroma","type":"generation-source","status":"approved","path":"source/star-structure-svo-v1-chroma.png","batchSource":"star-structure-batch-v1-chroma","gridCell":[557,0,1115,470],"dimensions":[558,470],"mode":"RGB","sha256":"ec29377c58f67e087041aa2ed71bf3002e972a91456b769149df0b86b7844ab7"
+    },
+    {
+      "id":"star-structure-svo-v1","type":"star","starKey":"structure.svo","rarity":"common","status":"production","path":"stars/structure-svo-v1.png","source":"star-structure-svo-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,154,880,869],"mode":"RGBA","sha256":"d4d680b14c48dfbe6bfe6e6daae566a28c553151ab65bb026bc300ad906e2bff","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","slotCount":3,"embeddedText":false,"familyStyle":"pass"}
+    },
+    {
+      "id":"star-structure-sp-v1-chroma","type":"generation-source","status":"approved","path":"source/star-structure-sp-v1-chroma.png","batchSource":"star-structure-batch-v1-chroma","gridCell":[1115,0,1672,470],"dimensions":[557,470],"mode":"RGB","sha256":"6a4a598d497fdd39a16aa597a738dd80324580a0f5ff95267279cb7272383e7f"
+    },
+    {
+      "id":"star-structure-sp-v1","type":"star","starKey":"structure.sp","rarity":"common","status":"production","path":"stars/structure-sp-v1.png","source":"star-structure-sp-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,154,880,869],"mode":"RGBA","sha256":"22cfe60ac8cd1bc8b97adfa8f4528d3f4cce5cdce80256dffdb846a345fbde6b","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","slotCount":2,"diamondConnector":true,"embeddedText":false,"familyStyle":"pass"}
+    },
+    {
+      "id":"star-structure-svoo-v1-chroma","type":"generation-source","status":"approved","path":"source/star-structure-svoo-v1-chroma.png","batchSource":"star-structure-batch-v1-chroma","gridCell":[0,470,557,941],"dimensions":[557,471],"mode":"RGB","sha256":"d4f89b4b25c36dfa94f71f55afd07ac7fcfca8093ce4feb66bd922d8cffb293d"
+    },
+    {
+      "id":"star-structure-svoo-v1","type":"star","starKey":"structure.svoo","rarity":"rare","status":"production","path":"stars/structure-svoo-v1.png","source":"star-structure-svoo-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,153,880,870],"mode":"RGBA","sha256":"24c03623e1fc4bd1c9c3725daee2cdd28d7e337bb37390cbe85fbf018f42aae9","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","slotCount":4,"branchedObjects":2,"embeddedText":false,"familyStyle":"pass"}
+    },
+    {
+      "id":"star-structure-svoc-v1-chroma","type":"generation-source","status":"approved","path":"source/star-structure-svoc-v1-chroma.png","batchSource":"star-structure-batch-v1-chroma","gridCell":[557,470,1115,941],"dimensions":[558,471],"mode":"RGB","sha256":"a90e842968b2840964f88d1a20a3860a05bfb9030bcb1b4915a694c64d6302d9"
+    },
+    {
+      "id":"star-structure-svoc-v1","type":"star","starKey":"structure.svoc","rarity":"rare","status":"production","path":"stars/structure-svoc-v1.png","source":"star-structure-svoc-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,153,880,870],"mode":"RGBA","sha256":"4675fd017794c9f53ebaa0e08a0589a53f76b30e3b864604f106f746cb2b889d","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","slotCount":4,"complementHalo":true,"embeddedText":false,"familyStyle":"pass"}
+    },
+    {
+      "id":"stars-structure-v1-contact-sheet","type":"review-contact-sheet","status":"approved","path":"review/stars-structure-v1-contact-sheet.png","dimensions":[1650,1100],"mode":"RGB","sha256":"625a22e5a656d4521e1ea6ae8c1ca3ec25a2632545cb2c1096240b8ca7459dcd","notes":"句型座五枚星标的尺寸、内边距、稀有度、槽位结构、无内嵌字母与家族风格验收通过。"
+    },
+    {
+      "id":"star-explore-batch-v1-chroma","type":"generation-batch-source","status":"approved","path":"source/star-explore-batch-v1-chroma.png","prompt":"prompts/star-explore-batch-v1.md","references":["stars-structure-v1-contact-sheet"],"dimensions":[1254,1254],"mode":"RGB","sha256":"a58d46602459b3e28fee9a0ebfa47bf2f9c23848c7b600a3f46c02b6b7ee531e","notes":"探索座 2×2 批量生成源,按四象限切图。"
+    },
+    {
+      "id":"star-explore-ocr-v1-chroma","type":"generation-source","status":"approved","path":"source/star-explore-ocr-v1-chroma.png","batchSource":"star-explore-batch-v1-chroma","gridCell":[0,0,627,627],"dimensions":[627,627],"mode":"RGB","sha256":"17ecb8a1246ffee6d41c2f9876c3c197f253bdc754d1b6323fcfe9beeb9db348"
+    },
+    {
+      "id":"star-explore-ocr-v1","type":"star","starKey":"explore.ocr","rarity":"rare","status":"production","path":"stars/explore-ocr-v1.png","source":"star-explore-ocr-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,151,880,873],"mode":"RGBA","sha256":"907f5b85614353a3892b4d17068defdda0b264c369f7ba108aedbf4f2255b074","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"camera","familyStyle":"pass"}
+    },
+    {
+      "id":"star-explore-custom-v1-chroma","type":"generation-source","status":"approved","path":"source/star-explore-custom-v1-chroma.png","batchSource":"star-explore-batch-v1-chroma","gridCell":[627,0,1254,627],"dimensions":[627,627],"mode":"RGB","sha256":"a10c247269589b10326e52ee292f1997b822251951551cbaee205a81d36719f7"
+    },
+    {
+      "id":"star-explore-custom-v1","type":"star","starKey":"explore.custom","rarity":"rare","status":"production","path":"stars/explore-custom-v1.png","source":"star-explore-custom-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,149,880,875],"mode":"RGBA","sha256":"f6e26735934b999fdbb1af790c679526d8719ce546cf2bccf679332cf839e2c0","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"pencil","familyStyle":"pass"}
+    },
+    {
+      "id":"star-explore-theme-v1-chroma","type":"generation-source","status":"approved","path":"source/star-explore-theme-v1-chroma.png","batchSource":"star-explore-batch-v1-chroma","gridCell":[0,627,627,1254],"dimensions":[627,627],"mode":"RGB","sha256":"9de2630fbae903dfcd584b6c7cb876d7d6657baa81a63907b53fc4d9b514de55"
+    },
+    {
+      "id":"star-explore-theme-v1","type":"star","starKey":"explore.theme","rarity":"common","status":"production","path":"stars/explore-theme-v1.png","source":"star-explore-theme-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,143,880,880],"mode":"RGBA","sha256":"58897f96073b2e0d2da9ec17bb9f9661de9c3da19d533a9863035bee3419ad18","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"four-color palette","paintDotCount":4,"familyStyle":"pass"}
+    },
+    {
+      "id":"star-explore-all-levels-v1-chroma","type":"generation-source","status":"approved","path":"source/star-explore-all-levels-v1-chroma.png","batchSource":"star-explore-batch-v1-chroma","gridCell":[627,627,1254,1254],"dimensions":[627,627],"mode":"RGB","sha256":"476b107fb2569afc21c79d1ce05c698123feb40730312da9011663ceeb85c616"
+    },
+    {
+      "id":"star-explore-all-levels-v1","type":"star","starKey":"explore.all_levels","rarity":"epic","status":"production","path":"stars/explore-all-levels-v1.png","source":"star-explore-all-levels-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,145,880,879],"mode":"RGBA","sha256":"c7c0ce8f0248f43d4e23a6a04ebc4f5114eb15137c5bf2523cd69354d134b5fb","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"unlabeled compass","embeddedText":false,"familyStyle":"pass"}
+    },
+    {
+      "id":"stars-explore-v1-contact-sheet","type":"review-contact-sheet","status":"approved","path":"review/stars-explore-v1-contact-sheet.png","dimensions":[1100,1100],"mode":"RGB","sha256":"22e3483522e2a1232b1f8920350a3ed9130c40b3c00853ab187aec601e325a68","notes":"探索座四枚星标的尺寸、内边距、稀有度、语义、无绿色抠图冲突与家族风格验收通过。"
+    },
+    {
+      "id":"star-fun-batch-v1-chroma","type":"generation-batch-source","status":"approved","path":"source/star-fun-batch-v1-chroma.png","prompt":"prompts/star-fun-batch-v1.md","references":["stars-explore-v1-contact-sheet"],"dimensions":[1254,1254],"mode":"RGB","sha256":"003ccbbfb68faca5e382db0cdce578489b7ae06cd3357e90a0ee153480b187ee","notes":"奇趣星云 2×2 批量生成源,按四象限切图。"
+    },
+    {
+      "id":"star-fun-morning-v1-chroma","type":"generation-source","status":"approved","path":"source/star-fun-morning-v1-chroma.png","batchSource":"star-fun-batch-v1-chroma","gridCell":[0,0,627,627],"dimensions":[627,627],"mode":"RGB","sha256":"2fc719c5a2700b66b39068ab806436788e349ccc05c72a412bc221bbb8de4e1c"
+    },
+    {
+      "id":"star-fun-morning-v1","type":"star","starKey":"fun.morning","rarity":"rare","status":"production","path":"stars/fun-morning-v1.png","source":"star-fun-morning-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,147,880,876],"mode":"RGBA","sha256":"853cd43f1ac1a1858950bd6455292fa7329645c92cf0c6c259a3ca784d2e7092","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"sunrise with five rays","rayCount":5,"familyStyle":"pass"}
+    },
+    {
+      "id":"star-fun-night-v1-chroma","type":"generation-source","status":"approved","path":"source/star-fun-night-v1-chroma.png","batchSource":"star-fun-batch-v1-chroma","gridCell":[627,0,1254,627],"dimensions":[627,627],"mode":"RGB","sha256":"74678ed83e363d3a360dd061a9d350dd1607d9a41fb5afae124b06aa9fc765e7"
+    },
+    {
+      "id":"star-fun-night-v1","type":"star","starKey":"fun.night","rarity":"rare","status":"production","path":"stars/fun-night-v1.png","source":"star-fun-night-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,147,880,876],"mode":"RGBA","sha256":"56ca3e6952047493b3fa966452a6f85a25a8291507e06aaadf14a0963927008f","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"simplified owl face","familyStyle":"pass"}
+    },
+    {
+      "id":"star-fun-points1000-v1-chroma","type":"generation-source","status":"approved","path":"source/star-fun-points1000-v1-chroma.png","batchSource":"star-fun-batch-v1-chroma","gridCell":[0,627,627,1254],"dimensions":[627,627],"mode":"RGB","sha256":"5207c4f925671b584a3df0b5bcad5dafb78abe7798d6b1b723e9bc44b8bbb911"
+    },
+    {
+      "id":"star-fun-points1000-v1","type":"star","starKey":"fun.points1000","rarity":"legendary","status":"production","path":"stars/fun-points1000-v1.png","source":"star-fun-points1000-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,146,880,877],"mode":"RGBA","sha256":"8f1e8fafbae1b3bfdf43b59e62a3884901123a16314960e3db5cf843dc19705d","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"treasure chest","embeddedText":false,"familyStyle":"pass"}
+    },
+    {
+      "id":"star-fun-egg-v1-chroma","type":"generation-source","status":"approved","path":"source/star-fun-egg-v1-chroma.png","batchSource":"star-fun-batch-v1-chroma","gridCell":[627,627,1254,1254],"dimensions":[627,627],"mode":"RGB","sha256":"14fb5d7ae242ccae3680ffb9c2661f68e61a42cf57eac2483801611b0e894606"
+    },
+    {
+      "id":"star-fun-egg-v1","type":"star","starKey":"fun.egg","rarity":"legendary","hidden":true,"status":"production","path":"stars/fun-egg-v1.png","source":"star-fun-egg-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,146,880,878],"mode":"RGBA","sha256":"558d50daf69f1f21750ced82f979f99118ecf1fc057e28d9a6acfb3fc0393493","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","padding":"pass","rarity":"pass","emblem":"cosmic egg with question mark","permittedSymbol":"?","familyStyle":"pass"}
+    },
+    {
+      "id":"stars-fun-v1-contact-sheet","type":"review-contact-sheet","status":"approved","path":"review/stars-fun-v1-contact-sheet.png","dimensions":[1100,1100],"mode":"RGB","sha256":"8c992b9007d74443a20b715b65ae58eacb25ede3c80277db0d43c98d1270b8aa","notes":"奇趣星云四枚星标的尺寸、内边距、稀有度、语义、隐藏符号与家族风格验收通过。"
+    },
+    {
+      "id":"stars-all-v1-contact-sheet","type":"review-contact-sheet","status":"approved","path":"review/stars-all-v1-contact-sheet.png","dimensions":[2000,2400],"mode":"RGB","sha256":"bee7ab5918e8f799eeed4be86d19549e6e85928bd7e936a3a6b7e226b06285cb","notes":"30 枚 Lit 成就星标全量验收通过:尺寸、内边距、稀有度、语义区分、计数约束与家族风格一致。"
+    },
+    {
+      "id":"effects-batch-v1-chroma","type":"generation-batch-source","status":"rejected","path":"source/effects-batch-v1-chroma.png","prompt":"prompts/effects-batch-v1.md","references":["stars-all-v1-contact-sheet"],"dimensions":[1536,1024],"mode":"RGB","sha256":"91469aa24cdc009f59a97a6ddc2cf2c72fa431d58c427ec9a7746ac32d76f94d","notes":"爆发环只有 11 道射线,星尘只有 5 个青点,未采用。"
+    },
+    {
+      "id":"effects-batch-v2-chroma","type":"generation-batch-source","status":"rejected","path":"source/effects-batch-v2-chroma.png","prompt":"prompts/effects-batch-v2.md","references":["effects-batch-v1-chroma"],"dimensions":[1536,1024],"mode":"RGB","sha256":"0a9d7513839020432715439907ae0ebea67700138284443204c99f6e21396bad","notes":"数量已修正,但横幅跨入星尘单元格,机械切图污染。"
+    },
+    {
+      "id":"effects-v2-overlap-rejected","type":"review-contact-sheet","status":"rejected","path":"review/effects-v2-overlap-rejected.png","dimensions":[1650,1100],"mode":"RGB","sha256":"4830664597320e3879b0032153e14fb96ec178c3ae0f32a73088ccc5f4879a0d","notes":"星尘右侧混入横幅碎片且横幅左尾被截断。"
+    },
+    {
+      "id":"effects-batch-v3-chroma","type":"generation-batch-source","status":"approved","path":"source/effects-batch-v3-chroma.png","prompt":"prompts/effects-batch-v3.md","references":["effects-batch-v2-chroma"],"dimensions":[1536,1024],"mode":"RGB","sha256":"272798b046ce551d4534bde433e70d8b51a1aaae5b8db8ff51dcc6bf457b2e8c","notes":"星尘与横幅缩小并重定位,各自完整落入单元格。"
+    },
+    {
+      "id":"effect-locked-mask-v1-chroma","type":"generation-source","status":"approved","path":"source/effect-locked-mask-v1-chroma.png","batchSource":"effects-batch-v3-chroma","gridCell":[0,0,512,512],"dimensions":[512,512],"mode":"RGB","sha256":"ce3e978cfd18f1ea29b841209ce1e85a726dd7fc3db79c03232ee5190ba8de74"
+    },
+    {
+      "id":"effect-locked-mask-v1","type":"effect","status":"production","path":"effects/locked-mask-v1.png","source":"effect-locked-mask-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,161,880,862],"mode":"RGBA","sha256":"980826414338ac83ff64faef789f91c6d271e9261874941ecd0c368959d0c49d","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","cellIsolation":"pass","familyStyle":"pass"}
+    },
+    {
+      "id":"effect-hidden-question-v1-chroma","type":"generation-source","status":"approved","path":"source/effect-hidden-question-v1-chroma.png","batchSource":"effects-batch-v3-chroma","gridCell":[512,0,1024,512],"dimensions":[512,512],"mode":"RGB","sha256":"a5530328c036a6acaecd305bf89f66433d4d050560637ff2ad5983eedf0be181"
+    },
+    {
+      "id":"effect-hidden-question-v1","type":"effect","status":"production","path":"effects/hidden-question-v1.png","source":"effect-hidden-question-v1-chroma","dimensions":[1024,1024],"contentBbox":[149,143,875,880],"mode":"RGBA","sha256":"e8b95c41606574d15dd7098769dc2e7d63287da14c08732117f59b06978810ca","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","permittedSymbol":"?","cellIsolation":"pass","familyStyle":"pass"}
+    },
+    {
+      "id":"effect-shooting-star-v1-chroma","type":"generation-source","status":"approved","path":"source/effect-shooting-star-v1-chroma.png","batchSource":"effects-batch-v3-chroma","gridCell":[1024,0,1536,512],"dimensions":[512,512],"mode":"RGB","sha256":"1a8d78928e1f965d0b7eea8a0d075470431c62cfe4b620d808a063a59b388cd8"
+    },
+    {
+      "id":"effect-shooting-star-v1","type":"effect","status":"production","path":"effects/shooting-star-v1.png","source":"effect-shooting-star-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,203,880,821],"mode":"RGBA","sha256":"323ae335d50dae9923aca8d097a1574c630eb0cdcb65a97a7ce312542ff085f9","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","tailCount":2,"cellIsolation":"pass","familyStyle":"pass"}
+    },
+    {
+      "id":"effect-burst-flare-v1-chroma","type":"generation-source","status":"approved","path":"source/effect-burst-flare-v1-chroma.png","batchSource":"effects-batch-v3-chroma","gridCell":[0,512,512,1024],"dimensions":[512,512],"mode":"RGB","sha256":"8bcffdf00b8805bdbbaae77fcb6a8474b149737da8112cd4c058a52f5ee1e500"
+    },
+    {
+      "id":"effect-burst-flare-v1","type":"effect","status":"production","path":"effects/burst-flare-v1.png","source":"effect-burst-flare-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,148,880,875],"mode":"RGBA","sha256":"c4b612787cb439dda241f2dbbc53bef729aa12392bf59779b5731c59aaad232e","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","rayCount":12,"emptyCenter":true,"cellIsolation":"pass","familyStyle":"pass"}
+    },
+    {
+      "id":"effect-stardust-v1-chroma","type":"generation-source","status":"approved","path":"source/effect-stardust-v1-chroma.png","batchSource":"effects-batch-v3-chroma","gridCell":[512,512,1024,1024],"dimensions":[512,512],"mode":"RGB","sha256":"e517108e5c5ffa71d93895f9f0490ae07b41218b4dda58377423650e942269a8"
+    },
+    {
+      "id":"effect-stardust-v1","type":"effect","status":"production","path":"effects/stardust-v1.png","source":"effect-stardust-v1-chroma","dimensions":[1024,1024],"contentBbox":[164,143,859,880],"mode":"RGBA","sha256":"ae98cee87724cd6d10e28c77da89d3ad934264d6066eabd005e609c3b56916ee","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","goldSparkles":6,"cyanDots":6,"particleCount":12,"cellIsolation":"pass","familyStyle":"pass"}
+    },
+    {
+      "id":"effect-title-banner-v1-chroma","type":"generation-source","status":"approved","path":"source/effect-title-banner-v1-chroma.png","batchSource":"effects-batch-v3-chroma","gridCell":[1024,512,1536,1024],"dimensions":[512,512],"mode":"RGB","sha256":"bafb5264a5541ea4b1ca7ab3c018357993f028034c36f84e84e4350069cb7b1b"
+    },
+    {
+      "id":"effect-title-banner-v1","type":"effect","status":"production","path":"effects/title-banner-v1.png","source":"effect-title-banner-v1-chroma","dimensions":[1024,1024],"contentBbox":[143,371,880,653],"mode":"RGBA","sha256":"17ec9e015e268fb5482483eab22abb03f761824ba27b603af8cf446f6c837f0c","processing":{"slice":"scripts/slice-star-map-sheet.py","method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.72},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","blankTextArea":true,"bothTailsVisible":true,"cellIsolation":"pass","familyStyle":"pass"}
+    },
+    {
+      "id":"effects-v3-contact-sheet","type":"review-contact-sheet","status":"approved","path":"review/effects-v3-contact-sheet.png","dimensions":[1650,1100],"mode":"RGB","sha256":"6adf2a01002e61bdf291da210b0e9c11b4a8ff5213569f97c7cd6182f33c02b1","notes":"六个通用特效的数量、边界隔离、透明交付、组合语义与家族风格验收通过。"
+    },
+    {
+      "id":"background-mobile-v1-source","type":"generation-source","status":"approved","path":"source/background-mobile-v1-source.png","prompt":"prompts/background-mobile-v1.md","references":["style-master-v1","constellations-v2-contact-sheet"],"dimensions":[941,1672],"mode":"RGB","sha256":"f0c41904a597acd692f22e660d659d7c944a2c0d886763d879b2a0a65deca891","notes":"移动端 9:16 夜空背景生成源，保留中央动态星图安全区。"
+    },
+    {
+      "id":"background-mobile-v1","type":"background","platform":"mobile","status":"production","path":"backgrounds/mobile-v1.webp","source":"background-mobile-v1-source","dimensions":[2160,3840],"mode":"RGB","sha256":"951e34429351e30bbee58970bede8fc5b23ce6af69c61d958dadb0414c911058","processing":{"method":"Pillow ImageOps.fit","resample":"LANCZOS","target":[2160,3840],"preserveAspectRatio":true,"format":"WebP"},"qa":{"centralSafeZone":"pass","topUiSafeZone":"pass","dynamicLayerConflicts":"none","embeddedText":false,"familyStyle":"pass"}
+    },
+    {
+      "id":"background-desktop-v1-source","type":"generation-source","status":"approved","path":"source/background-desktop-v1-source.png","prompt":"prompts/background-desktop-v1.md","references":["background-mobile-v1-source"],"dimensions":[1672,941],"mode":"RGB","sha256":"b340311c1bb3effbfbb9bfffd214f10a4293e175266020a30dd0742857c4ad3e","notes":"Web/平板 16:9 夜空背景生成源，与移动版共享世界观和中央动态星图安全区。"
+    },
+    {
+      "id":"background-desktop-v1","type":"background","platform":"desktop-tablet","status":"production","path":"backgrounds/desktop-v1.webp","source":"background-desktop-v1-source","dimensions":[3840,2160],"mode":"RGB","sha256":"e31b54cbe52f806febc0739fad247ea4f2c5221abaa3f3d43dbd34b2bef71a5b","processing":{"method":"Pillow ImageOps.fit","resample":"LANCZOS","target":[3840,2160],"preserveAspectRatio":true,"format":"WebP"},"qa":{"centralSafeZone":"pass","topUiSafeZone":"pass","dynamicLayerConflicts":"none","embeddedText":false,"familyStyle":"pass"}
+    },
+    {
+      "id":"backgrounds-v1-contact-sheet","type":"review-contact-sheet","status":"approved","path":"review/backgrounds-v1-contact-sheet.jpg","dimensions":[1800,1200],"mode":"RGB","sha256":"5d937e47332311eb885ede6121328990794d04efd3a9d50e6fe4b3415714e44b","notes":"移动端与桌面端背景的构图、中央安全区、底部地标、配色和家族一致性验收通过。"
+    },
+    {
+      "id":"mascot-guide-v1-chroma","type":"generation-source","status":"approved","path":"source/mascot-guide-v1-chroma.png","prompt":"prompts/mascot-guide-v1.md","references":["style-master-v1"],"dimensions":[1254,1254],"mode":"RGB","sha256":"d4cc1d4e82b6414841e874e800cc0ac87316f72b844d839e60b00f500f2a6115","notes":"星星精灵引导姿态绿色抠图源。"
+    },
+    {
+      "id":"mascot-guide-v1","type":"mascot","pose":"guide","status":"production","path":"mascots/guide-v1.png","source":"mascot-guide-v1-chroma","dimensions":[1024,1024],"contentBbox":[112,198,911,825],"mode":"RGBA","sha256":"28cb09349ae338e3aab4e28d3eed819a6641c37bbd964ef501daab58f73ca659","processing":{"method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.78,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","fullBody":"pass","poseReadability":"pass","familyStyle":"pass"}
+    },
+    {
+      "id":"mascot-celebrate-v1-chroma","type":"generation-source","status":"approved","path":"source/mascot-celebrate-v1-chroma.png","prompt":"prompts/mascot-celebrate-v1.md","references":["mascot-guide-v1"],"dimensions":[1254,1254],"mode":"RGB","sha256":"ba63efc9909ad9582fc455fbb0ea2a30b502b5b8448f6451706e5f7ba332a388","notes":"同一星星精灵的庆祝姿态绿色抠图源。"
+    },
+    {
+      "id":"mascot-celebrate-v1","type":"mascot","pose":"celebrate","status":"production","path":"mascots/celebrate-v1.png","source":"mascot-celebrate-v1-chroma","dimensions":[1024,1024],"contentBbox":[112,161,911,862],"mode":"RGBA","sha256":"5227b3467f9a4fc4d147f338f0a0a40ec6575841001680da544f5dcd999c6976","processing":{"method":"remove_chroma_key.py","autoKey":"border","softMatte":true,"despill":true,"edgeContract":1,"normalizer":"scripts/normalize-star-map-asset.py","occupancy":0.78,"preserveAspectRatio":true},"qa":{"alphaChannel":true,"transparentCorners":true,"edgeFringe":"pass","fullBody":"pass","poseReadability":"pass","characterConsistency":"pass","familyStyle":"pass"}
+    },
+    {
+      "id":"mascots-v1-contact-sheet","type":"review-contact-sheet","status":"approved","path":"review/mascots-v1-contact-sheet.png","dimensions":[1200,650],"mode":"RGB","sha256":"54c3fc1e02c900900897177308b82419629a3c30c51fb373a2b8fdbf817d4998","notes":"引导与庆祝姿态的角色一致性、动作识别、透明边缘、完整肢体和安全边距验收通过。"
+    },
+    {
+      "id":"empty-state-cover-v1-source","type":"generation-source","status":"approved","path":"source/empty-state-cover-v1-source.png","prompt":"prompts/empty-state-cover-v1.md","references":["background-mobile-v1-source","mascot-guide-v1"],"dimensions":[941,1672],"mode":"RGB","sha256":"4f27a8227a9c980b75633e042a17e728eef8cbc658771c35103bd69417df4045","notes":"移动端空状态封面生成源，复用获批背景世界与星星精灵角色。"
+    },
+    {
+      "id":"empty-state-cover-v1","type":"cover","platform":"mobile","status":"production","path":"backgrounds/empty-state-cover-v1.webp","source":"empty-state-cover-v1-source","dimensions":[2160,3840],"mode":"RGB","sha256":"60398b8fe4ff872ff367d166033f9a8df68475d7c642d69f935a66d950eed69a","processing":{"method":"Pillow ImageOps.fit","resample":"LANCZOS","target":[2160,3840],"preserveAspectRatio":true,"format":"WebP"},"qa":{"upperSafeZone":"pass","characterIdentity":"pass","landmarksLowerThird":"pass","dynamicLayerConflicts":"none","embeddedText":false,"familyStyle":"pass"}
+    },
+    {
+      "id":"empty-state-cover-v1-preview","type":"review-preview","status":"approved","path":"review/empty-state-cover-v1-preview.jpg","dimensions":[540,960],"mode":"RGB","sha256":"cdcaa7390f040284eb4010dc2073ae8813d21039e82ef37a2539d99e5db2cfb9","notes":"空状态封面的上方 UI 安全区、角色尺寸、下方地标与无烘焙文字/星座元素验收通过。"
+    },
+    {
+      "id":"final-assets-v1-contact-sheet","type":"review-contact-sheet","status":"approved","path":"review/final-assets-v1-contact-sheet.jpg","dimensions":[3000,6300],"mode":"RGB","sha256":"76be1f4eab355f2fbf3a44a895a17dfb62d7868926abc563c0f69b051e5aa09e","notes":"全部 53 项 production 交付物的最终视觉审计总览；分类数量、透明边缘、构图安全区与家族风格复核通过。"
+    }
+  ]
+}
